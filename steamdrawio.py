@@ -266,7 +266,7 @@ def create_network(sys, graph, visited):
 
 
 # %%
-def steamdrawio(sys, measure="mass", filename="diagram"):
+def draw(sys, measure="mass", filename="diagram"):
     """
     Draws a diagram of the system using the draw.io format.
 
