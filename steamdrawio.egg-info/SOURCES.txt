@@ -1,0 +1,7 @@
+README.md
+setup.py
+steamdrawio.egg-info/PKG-INFO
+steamdrawio.egg-info/SOURCES.txt
+steamdrawio.egg-info/dependency_links.txt
+steamdrawio.egg-info/requires.txt
+steamdrawio.egg-info/top_level.txt
