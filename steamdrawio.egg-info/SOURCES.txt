@@ -2,6 +2,8 @@ LICENSE
 README.md
 pyproject.toml
 setup.py
+steamdrawio/__init__.py
+steamdrawio/steamdrawio.py
 steamdrawio.egg-info/PKG-INFO
 steamdrawio.egg-info/SOURCES.txt
 steamdrawio.egg-info/dependency_links.txt
