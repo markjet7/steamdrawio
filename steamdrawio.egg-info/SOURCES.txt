@@ -1,4 +1,6 @@
+LICENSE
 README.md
+pyproject.toml
 setup.py
 steamdrawio.egg-info/PKG-INFO
 steamdrawio.egg-info/SOURCES.txt
