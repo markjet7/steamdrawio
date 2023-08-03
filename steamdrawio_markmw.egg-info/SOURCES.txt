@@ -1,0 +1,9 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+steamdrawio_markmw.egg-info/PKG-INFO
+steamdrawio_markmw.egg-info/SOURCES.txt
+steamdrawio_markmw.egg-info/dependency_links.txt
+steamdrawio_markmw.egg-info/requires.txt
+steamdrawio_markmw.egg-info/top_level.txt
