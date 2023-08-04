@@ -6,6 +6,8 @@ setup(
     author="Mark Mba Wright",
     author_email="markmw@iastate.edu",
     packages=find_packages(),
+    package_dir={"steamdrawio": "src/steamdrawio"},
+    package_data={"steamdrawio": ["src/steamdrawio/shapes.csv"]},
     install_requires=[
         "networkx"
     ],
