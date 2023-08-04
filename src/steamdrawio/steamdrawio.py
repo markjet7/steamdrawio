@@ -50,7 +50,7 @@ try:
     f = open("shapes.csv", "r")
     for line in f:
         line = line.split(",")
-        if line[0] !== "unit":
+        if line[0] != "unit":
             shapes[line[0]] = [line[1], line[2], line[3]]
 except:
     pass
