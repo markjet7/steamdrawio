@@ -1,1 +1,1 @@
-__all__ = ["steamdrawio"]
+from .steamdrawio import draw
