@@ -5,7 +5,7 @@ setup(
     version="0.1",
     author="Mark Mba Wright",
     author_email="markmw@iastate.edu",
-    packages=find_packages(),
+    packages=["steamdrawio"],
     package_dir={"steamdrawio": "src/steamdrawio"},
     package_data={"steamdrawio": ["src/steamdrawio/shapes.csv"]},
     install_requires=[
