@@ -2,6 +2,7 @@
 import xml.etree.ElementTree as ET
 import random
 import networkx as nx
+import importlib
 
 # %%
 
@@ -55,6 +56,12 @@ try:
 except:
     pass
 
+def is_module_installed(module_name):
+    try:
+        importlib.import_module(module_name)
+        return True
+    except ImportError:
+        return False
 
 def get_shape(nodeID):
     shp = ["rectangle;rounded=1;strokeColor=#00f;fillColor=default", "100", "60"]
@@ -146,32 +153,36 @@ def ComputeHorizontalLayout(system, node, x, y, level):
         return
 
     # Create a queue for BFS and add the root node along with its level (0)
-    queue = []
-    queue.append([node, 0])
+    queue = [] # list of nodes and their x positions
+    positions = {} # list of nodes and their x and y positions
+    feed_level = 0
+    y = 1
+    for node in system.feeds:
+        queue.append([node, 0, y])
+        
+        # To store the nodes along with their calculated positions
+        while len(queue) > 0:
+            new_queue = queue 
+            queue = []
 
-    # To store the nodes along with their calculated positions
-    positions = {node: (0, 0)}
-    while len(queue) > 0:
-        node, level = queue.pop()
+            for node, x, y in new_queue:
+                # Store the node with its level
+                positions[node] = (x, y)
 
-        # If this level hasn't been visited before, its order (x position) will be 0
-        levels = [level for node, (level, order) in positions.items()]
-        if level not in levels:
-            positions[node] = (level, 1)
-        else:
-            lastOrder = max(
-                [order for node, (level, order) in positions.items() if level == level]
-            )
-
-            positions[node] = (level, lastOrder + 1)
-
-        # Enqueue all children with their corresponding level
-        for child in node.outs:
-            if child and child.sink and child.sink not in positions:
-                queue.append([child.sink, level + 1])
-
+                # Enqueue all children with their corresponding level
+                if "sink" in dir(node) and node.sink and node.sink not in positions:
+                    queue.append([node.sink, x + 1, y])
+                    continue
+                if "outs" in dir(node): 
+                    for child in node.outs:
+                        if child and child.sink and child.sink not in positions:
+                            queue.append([child.sink, x + 1, y])
+                            y += 1
+                            continue
+                        if child and child not in positions:
+                            queue.append([child, x + 1, y])
+                            y += 1
     return positions
-
 
 # shapes["furnace"] = ["mxgraph.pid.vessels.furnace", "80", "100"]
 # draw_io2(sys, measure="mass", filename="flowsheet")
@@ -266,6 +277,7 @@ def create_network(sys, graph, visited):
 
 
 # %%
+
 def draw(sys, measure="mass", filename="diagram"):
     """
     Draws a diagram of the system using the draw.io format.
@@ -278,14 +290,26 @@ def draw(sys, measure="mass", filename="diagram"):
     G = nx.DiGraph()
     visited = []
     G = create_network(sys, G, visited)
-    pos = nx.nx_agraph.graphviz_layout(
-        G, prog="dot", args="-Grankdir=LR -Gminlen=2 -Gnodesep=2.5 -Granksep=1.2"
-    )
+    if is_module_installed("pygraphviz"):
+        pos = nx.nx_agraph.graphviz_layout(
+            G, prog="dot", args="-Grankdir=LR -Gminlen=2 -Gnodesep=2.5 -Granksep=1.2"
+        )
+    else:
+        # pos = nx.nx_pydot.graphviz_layout(
+        #     G, prog="dot"
+        # )
+        layout = ComputeHorizontalLayout(sys, 0, 0, 0, 0)
+        pos = {}
+        grid_x = 300
+        grid_y = 150
+        for k in layout:
+            pos[k] = (layout[k][0] * grid_x, layout[k][1] * grid_y)
     path = sys._unit_path
 
     groups = ["root"]
     subsystems = sys.subsystems
     for u in path:
+        u.group = "root"
         for s in subsystems:
             if u in s.units:
                 u.group = s.ID
@@ -362,7 +386,7 @@ def draw(sys, measure="mass", filename="diagram"):
                 elem.set("id", f"e{s.source.ID}-{s.sink.ID}")
                 elem.set(
                     "style",
-                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;elbow=vertical;fontFamily=Helvetica;fontSize=18;align=center;",
+                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
                 )
                 elem.set("source", f"{s.source.ID}")
                 elem.set("target", f"{s.sink.ID}")
@@ -372,7 +396,7 @@ def draw(sys, measure="mass", filename="diagram"):
                 elem.set("target", f"o{s.ID}")
                 elem.set(
                     "style",
-                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;elbow=vertical;fontFamily=Helvetica;fontSize=18;align=center;",
+                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
                 )
                 outNode = ET.SubElement(parent, "mxCell")
                 outNode.set("id", f"o{s.ID}")
@@ -399,7 +423,7 @@ def draw(sys, measure="mass", filename="diagram"):
             elem.set("id", f"i{s.ID}-{u.ID}")
             elem.set(
                 "style",
-                "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;elbow=vertical;fontFamily=Helvetica;fontSize=12;align=center;",
+                "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=12;align=center;",
             )
             geometry = ET.SubElement(elem, "mxGeometry")
             geometry.set("relative", "1")
@@ -429,6 +453,5 @@ def draw(sys, measure="mass", filename="diagram"):
     tree = ET.ElementTree(root)
     with open(filename + ".drawio", "wb") as file:
         tree.write(file, encoding="utf-8", xml_declaration=True)
-
 
 # draw_io(sys, measure="mass", filename="networkx_graph")

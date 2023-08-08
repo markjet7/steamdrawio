@@ -9,6 +9,6 @@ setup(
     package_dir={"steamdrawio": "src/steamdrawio"},
     package_data={"steamdrawio": ["src/steamdrawio/shapes.csv"]},
     install_requires=[
-        "networkx", "pygraphviz"
+        "networkx"
     ],
 )
