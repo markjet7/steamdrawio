@@ -1,12 +1,7 @@
 # Installation
 This package draws a horizontal flowchart of a biosteam model using the NetworkX package.
-To use this package, first, install graphviz and pygraphviz/
-
-Instructions to install graphviz: https://graphviz.gitlab.io/download/
-
-Instructions to install pygraphviz: https://pygraphviz.github.io/documentation/stable/install.html
-    
-Then install the steamdrawio package using pip:
+   
+Install the steamdrawio package using pip:
 ```
 pip install git+https://github.com/markjet7/steamdrawio/ 
 ```

@@ -3,7 +3,10 @@ README.md
 pyproject.toml
 setup.py
 src/steamdrawio/__init__.py
+src/steamdrawio/compounds.py
+src/steamdrawio/ethanol_tutorial.py
 src/steamdrawio/steamdrawio.py
+src/steamdrawio/test.py
 steamdrawio.egg-info/PKG-INFO
 steamdrawio.egg-info/SOURCES.txt
 steamdrawio.egg-info/dependency_links.txt

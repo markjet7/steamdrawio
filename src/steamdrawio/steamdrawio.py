@@ -453,5 +453,6 @@ def draw(sys, measure="mass", filename="diagram"):
     tree = ET.ElementTree(root)
     with open(filename + ".drawio", "wb") as file:
         tree.write(file, encoding="utf-8", xml_declaration=True)
+    return filename + ".drawio"
 
 # draw_io(sys, measure="mass", filename="networkx_graph")
