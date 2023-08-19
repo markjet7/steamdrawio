@@ -270,7 +270,8 @@ def create_network(sys, graph, visited):
             for s in u.outs:
                 if s.sink:
                     graph.add_edge(u, s.sink)
-                    create_network(s.sink._system, graph, visited)
+                    if s.sink._system:
+                        create_network(s.sink._system, graph, visited)
                 else:
                     graph.add_edge(u, s)
     return graph
