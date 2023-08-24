@@ -2,13 +2,11 @@ from setuptools import setup, find_packages
 
 setup(
     name="steamdrawio",
-    version="0.1",
+    version="0.3",
     author="Mark Mba Wright",
     author_email="markmw@iastate.edu",
     packages=["steamdrawio"],
     package_dir={"steamdrawio": "src/steamdrawio"},
     package_data={"steamdrawio": ["src/steamdrawio/shapes.csv"]},
-    install_requires=[
-        "networkx"
-    ],
+    install_requires=["networkx"],
 )

@@ -16,8 +16,16 @@ shapes = {
     "phasesplitter": ["mxgraph.pid.separators.separator_(cyclone)2", "100", "100"],
     "mocksplitter": ["mxgraph.pid.filters.filter", "80", "120"],
     "reversedsplitter": ["mxgraph.pid.filters.filter", "30", "30"],
-    "molecularsieve": ["mxgraph.pid.misc.screening_device,_sieve,_strainer", "100", "50",],
-    "hx": ["mxgraph.pid.heat_exchangers.fixed_straight_tubes_heat_exchanger", "50","10",],
+    "molecularsieve": [
+        "mxgraph.pid.misc.screening_device,_sieve,_strainer",
+        "100",
+        "50",
+    ],
+    "hx": [
+        "mxgraph.pid.heat_exchangers.fixed_straight_tubes_heat_exchanger",
+        "50",
+        "10",
+    ],
     "hxutility": ["mxgraph.pid.heat_exchangers.heater", "100", "60"],
     "hxprocess": ["mxgraph.pid.heat_exchangers.condenser", "100", "60"],
     "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "200", "120"],
@@ -36,13 +44,21 @@ shapes = {
     "splitflash": ["mxgraph.pid.separators.spray_scrubber", "70", "67"],
     "ratioflash": ["mxgraph.pid.separators.spray_scrubber", "110", "60"],
     "multieffectevaporator": ["mxgraph.pid.heat_exchangers.condenser", "100", "95"],
-    "solidsseparator": ["mxgraph.pid.separators.separator_(electromagnetic)", "14", "97",],
+    "solidsseparator": [
+        "mxgraph.pid.separators.separator_(electromagnetic)",
+        "14",
+        "97",
+    ],
     "rotaryvacuumfilter": ["mxgraph.pid.filters.press_filter", "52", "95"],
     "crushingmill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "80", "99"],
     "hammermill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "80", "99"],
     "conveyingbelt": ["mxgraph.pid2misc.conveyor", "150", "40"],
     "pressurefilter": ["mxgraph.pid.filters.press_filter", "91", "30"],
-    "solidscentrifuge": [ "mxgraph.pid.centrifuges.centrifuge_(solid_shell)", "100", "174" ],
+    "solidscentrifuge": [
+        "mxgraph.pid.centrifuges.centrifuge_(solid_shell)",
+        "100",
+        "174",
+    ],
     "reactor": ["mxgraph.pid.vessels.reactor", "160", "240"],
     "screwpress": ["mxgraph.pid.shaping_machines.extruder_(screw)", "100", "70"],
 }
@@ -56,12 +72,14 @@ try:
 except:
     pass
 
+
 def is_module_installed(module_name):
     try:
         importlib.import_module(module_name)
         return True
     except ImportError:
         return False
+
 
 def get_shape(nodeID):
     shp = ["rectangle;rounded=1;strokeColor=#00f;fillColor=default", "100", "60"]
@@ -153,16 +171,16 @@ def ComputeHorizontalLayout(system, node, x, y, level):
         return
 
     # Create a queue for BFS and add the root node along with its level (0)
-    queue = [] # list of nodes and their x positions
-    positions = {} # list of nodes and their x and y positions
+    queue = []  # list of nodes and their x positions
+    positions = {}  # list of nodes and their x and y positions
     feed_level = 0
     y = 1
     for node in system.feeds:
         queue.append([node, 0, y])
-        
+
         # To store the nodes along with their calculated positions
         while len(queue) > 0:
-            new_queue = queue 
+            new_queue = queue
             queue = []
 
             for node, x, y in new_queue:
@@ -173,7 +191,7 @@ def ComputeHorizontalLayout(system, node, x, y, level):
                 if "sink" in dir(node) and node.sink and node.sink not in positions:
                     queue.append([node.sink, x + 1, y])
                     continue
-                if "outs" in dir(node): 
+                if "outs" in dir(node):
                     for child in node.outs:
                         if child and child.sink and child.sink not in positions:
                             queue.append([child.sink, x + 1, y])
@@ -183,6 +201,7 @@ def ComputeHorizontalLayout(system, node, x, y, level):
                             queue.append([child, x + 1, y])
                             y += 1
     return positions
+
 
 # shapes["furnace"] = ["mxgraph.pid.vessels.furnace", "80", "100"]
 # draw_io2(sys, measure="mass", filename="flowsheet")
@@ -279,6 +298,7 @@ def create_network(sys, graph, visited):
 
 # %%
 
+
 def draw(sys, measure="mass", filename="diagram"):
     """
     Draws a diagram of the system using the draw.io format.
@@ -305,7 +325,8 @@ def draw(sys, measure="mass", filename="diagram"):
         grid_y = 150
         for k in layout:
             pos[k] = (layout[k][0] * grid_x, layout[k][1] * grid_y)
-    path = sys._unit_path
+
+    path = sys.unit_path
 
     groups = ["root"]
     subsystems = sys.subsystems
@@ -455,5 +476,6 @@ def draw(sys, measure="mass", filename="diagram"):
     with open(filename + ".drawio", "wb") as file:
         tree.write(file, encoding="utf-8", xml_declaration=True)
     return filename + ".drawio"
+
 
 # draw_io(sys, measure="mass", filename="networkx_graph")
