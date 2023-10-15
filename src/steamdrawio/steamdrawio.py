@@ -299,7 +299,7 @@ def create_network(sys, graph, visited):
 # %%
 
 
-def draw(sys, measure="mass", filename="diagram"):
+def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
     """
     Draws a diagram of the system using the draw.io format.
 
@@ -321,8 +321,6 @@ def draw(sys, measure="mass", filename="diagram"):
         # )
         layout = ComputeHorizontalLayout(sys, 0, 0, 0, 0)
         pos = {}
-        grid_x = 300
-        grid_y = 150
         for k in layout:
             pos[k] = (layout[k][0] * grid_x, layout[k][1] * grid_y)
 
@@ -376,7 +374,7 @@ def draw(sys, measure="mass", filename="diagram"):
     in_ys = 0
     out_ys = 0
     for u in path:
-        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.group]};"
+        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.group]};verticalLabelPosition=bottom;"
 
         elem = ET.SubElement(parent, "mxCell")
         elem.set("id", u.ID)
