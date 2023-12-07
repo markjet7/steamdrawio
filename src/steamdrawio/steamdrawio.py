@@ -1,8 +1,12 @@
 # %%
+import pprint
 import xml.etree.ElementTree as ET
 import random
 import networkx as nx
 import importlib
+
+from grandalf.graphs import Vertex,Edge,Graph,graph_core
+from grandalf.layouts import DigcoLayout 
 
 # %%
 
@@ -325,7 +329,6 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
             pos[k] = (layout[k][0] * grid_x, layout[k][1] * grid_y)
 
     path = sys.unit_path
-
     groups = ["root"]
     subsystems = sys.subsystems
     for u in path:
@@ -475,5 +478,197 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
         tree.write(file, encoding="utf-8", xml_declaration=True)
     return filename + ".drawio"
 
+#%%
+def to_draw_io(sys, pos, measure="mass", filename="diagram", grid_x=300, grid_y=200):
+    path = sys.unit_path
+    groups = ["root"]
+    subsystems = sys.subsystems
+    for u in path:
+        u.group = "root"
+        for s in subsystems:
+            if u in s.units:
+                u.group = s.ID
+                groups.append(s.ID)
+    groups = set(groups)
+    colors = dict([(g, color_list(i)) for i, g in enumerate(groups)])
+    # Create the root element
+    root = ET.Element("mxGraphModel")
+    root.set("dx", "846")
+    root.set("dy", "900")
+    root.set("grid", "1")
+    root.set("gridSize", "10")
+    root.set("guides", "1")
+    root.set("tooltips", "1")
+    root.set("connect", "1")
+    root.set("arrows", "1")
+    root.set("fold", "1")
+    root.set("page", "1")
+    root.set("pageScale", "1")
+    root.set("pageWidth", "1200")
+    root.set("pageHeight", "1200")
+    root.set("math", "0")
+    root.set("shadow", "0")
+
+    root.append(ET.Comment("Created by the Sustainable Energy Systems Analysis Group"))
+
+    parent = ET.SubElement(root, "root")
+    root_parent = ET.SubElement(parent, "mxCell")
+    root_parent.set("id", "0")
+
+    # Add default parent element
+    default_parent = ET.SubElement(parent, "mxCell")
+    default_parent.set("id", "1")
+    default_parent.set("parent", "0")
+
+    margin = 50
+    padding = 10
+    layout = {}
+    unit_width = 210
+    unit_height = 200
+
+    in_ys = 0
+    out_ys = 0
+    for u in path:
+        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.group]};verticalLabelPosition=bottom;"
+
+        elem = ET.SubElement(parent, "mxCell")
+        elem.set("id", u.ID)
+        elem.set("value", u.ID)
+        elem.set("style", style)
+        elem.set("vertex", "1")
+        elem.set("parent", "1")
+        # if u.group:
+        #     elem.set('parent', "group_" + u.group)
+        # else:
+        #     u.group = "root"
+
+        geometry = ET.SubElement(elem, "mxGeometry")
+        geometry.set("x", str(pos[u.ID][0]))
+        geometry.set("y", str(pos[u.ID][1]))
+        geometry.set("width", get_shape(u)[1])
+        geometry.set("height", get_shape(u)[2])
+        geometry.set("relative", "0")
+        geometry.set("as", "geometry")
+
+        for s in u.outs:
+            elem = ET.SubElement(parent, "mxCell")
+            elem.set("edge", "1")
+            geometry = ET.SubElement(elem, "mxGeometry")
+            geometry.set("relative", "1")
+            geometry.set("as", "geometry")
+            elem.set("parent", "1")
+            if s.source and s.sink:
+                elem.set("id", f"e{s.source.ID}-{s.sink.ID}")
+                elem.set(
+                    "style",
+                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                )
+                elem.set("source", f"{s.source.ID}")
+                elem.set("target", f"{s.sink.ID}")
+                elem.set("value", s.ID)
+            else:
+                elem.set("source", f"{u.ID}")
+                elem.set("target", f"o{s.ID}")
+                elem.set(
+                    "style",
+                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                )
+                outNode = ET.SubElement(parent, "mxCell")
+                outNode.set("id", f"o{s.ID}")
+                outNode.set("value", s.ID)
+                outNode.set(
+                    "style",
+                    "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;align=center;",
+                )
+                outNode.set("vertex", "1")
+                outNode.set("parent", "1")
+
+                geometry = ET.SubElement(outNode, "mxGeometry")
+                geometry.set("x", str(pos[s.ID][0]))
+                geometry.set("y", str(pos[s.ID][1]))
+                geometry.set("width", str(100))
+                geometry.set("height", str(60))
+                geometry.set("as", "geometry")
+                out_ys += 150
+
+        for s in u.ins:
+            elem = ET.SubElement(parent, "mxCell")
+            elem.set("edge", "1")
+            elem.set("parent", "1")
+            elem.set("id", f"i{s.ID}-{u.ID}")
+            elem.set(
+                "style",
+                "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=12;align=center;",
+            )
+            geometry = ET.SubElement(elem, "mxGeometry")
+            geometry.set("relative", "1")
+            geometry.set("as", "geometry")
+            if s.source == None:
+                elem.set("target", f"{u.ID}")
+                elem.set("source", f"i{s.ID}")
+                inNode = ET.SubElement(parent, "mxCell")
+                inNode.set("id", f"i{s.ID}")
+                inNode.set("value", s.ID)
+                inNode.set(
+                    "style",
+                    "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                )
+                inNode.set("vertex", "1")
+                inNode.set("parent", "1")
+
+                geometry = ET.SubElement(inNode, "mxGeometry")
+                geometry.set("x", str(0))
+                geometry.set("y", str(in_ys))
+                geometry.set("width", str(100))
+                geometry.set("height", str(60))
+                geometry.set("as", "geometry")
+                in_ys += 150
+
+    # Write the XML tree to a file
+    tree = ET.ElementTree(root)
+    with open(filename + ".drawio", "wb") as file:
+        tree.write(file, encoding="utf-8", xml_declaration=True)
+    return filename + ".drawio"
 
 # draw_io(sys, measure="mass", filename="networkx_graph")
+#%%
+def drawDCO(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
+    vs = {}
+    edges = []
+    for u in sys.streams:
+        if u.source and u.sink:
+            if u.source.ID not in vs.keys():
+                vs[u.source.ID] = Vertex(u.source.ID)
+            if u.sink.ID not in vs.keys():
+                vs[u.sink.ID] = Vertex(u.sink.ID)
+            edges.append(Edge(vs[u.source.ID], vs[u.sink.ID]))
+        elif u.source and not u.sink:
+            if u.source.ID not in vs.keys():
+                vs[u.source.ID] = Vertex(u.source.ID)
+            vs[u.ID] = Vertex(u.ID)
+            edges.append(Edge(vs[u.source.ID], vs[u.ID]))
+        elif not u.source and u.sink:
+            if u.sink.ID not in vs.keys():
+                vs[u.sink.ID] = Vertex(u.sink.ID)
+            vs[u.ID] = Vertex(u.ID)
+            edges.append(Edge(vs[u.ID], vs[u.sink.ID]))
+
+    class defaultview(object):
+        w,h = 10,10
+
+    for v in vs.values():
+        v.view = defaultview()
+    graph = Graph(vs.values(), edges)
+
+    dco = DigcoLayout(graph.C[0])
+    dco.init_all()
+    dco.draw()
+
+    pos = {}
+    for v in graph.C[0].sV: 
+        pos[v.data] = (-1*v.view.xy[1]*grid_y, v.view.xy[0]*grid_x)
+    print(pos)
+    to_draw_io(sys, pos, measure, filename, grid_x, grid_y)
+# %%
+drawDCO(sys, "mass", "testing", 60, 45)
+# %%
