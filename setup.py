@@ -8,5 +8,5 @@ setup(
     packages=["steamdrawio"],
     package_dir={"steamdrawio": "src/steamdrawio"},
     package_data={"steamdrawio": ["src/steamdrawio/shapes.csv"]},
-    install_requires=["grandalf"],
+    install_requires=["igraph"],
 )
