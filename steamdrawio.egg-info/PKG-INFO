@@ -12,6 +12,7 @@ Classifier: Operating System :: OS Independent
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: igraph
 
 # Installation
 This package draws a horizontal flowchart of a biosteam model using the NetworkX package.
