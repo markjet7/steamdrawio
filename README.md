@@ -1,5 +1,5 @@
 # Installation
-This package draws a horizontal flowchart of a biosteam model using the NetworkX package.
+This package draws a horizontal flowchart of a biosteam model using the igraph package.
    
 Install the steamdrawio package using pip:
 ```
