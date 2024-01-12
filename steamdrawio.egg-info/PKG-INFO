@@ -1,34 +1,13 @@
 Metadata-Version: 2.1
 Name: steamdrawio
-Version: 0.0.4
-Summary: A package to draw BioSteam diagrams in draw.io
+Version: 0.4.1
+Summary: UNKNOWN
+Home-page: UNKNOWN
 Author: Mark Mba Wright
-Author-email: Mark Mba Wright <markmw@iastate.edu>
-Project-URL: Homepage, https://github.com/markjet7/steamdrawio
-Project-URL: Bug Tracker, https://github.com/markjet7/steamdrawio/issues
-Classifier: Programming Language :: Python :: 3
-Classifier: License :: OSI Approved :: MIT License
-Classifier: Operating System :: OS Independent
-Requires-Python: >=3.7
-Description-Content-Type: text/markdown
+Author-email: markmw@iastate.edu
+License: UNKNOWN
+Platform: UNKNOWN
 License-File: LICENSE
-Requires-Dist: igraph
 
-# Installation
-This package draws a horizontal flowchart of a biosteam model using the igraph package.
-   
-Install the steamdrawio package using pip:
-```
-pip install git+https://github.com/markjet7/steamdrawio/ 
-```
-# Usage 
-Then import it using:
-```python
-from steamdrawio import draw
+UNKNOWN
 
-# Then use the draw function to draw a biosteam model:
-draw(model)
-```
-
-This will create a drawio file in the current working directory.
-You can open the drawio file using the drawio desktop app or the draw.io website.
