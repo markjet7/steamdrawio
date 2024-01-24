@@ -32,10 +32,10 @@ shapes = {
     ],
     "hxutility": ["mxgraph.pid.heat_exchangers.heater", "60", "60"],
     "hxprocess": ["mxgraph.pid.heat_exchangers.condenser", "60", "60"],
-    "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "200", "120"],
-    "mixtank": ["mxgraph.pid.vessels.jacketed_mixing_vessel", "200", "240"],
-    "storagetank": ["mxgraph.pid.vessels.tank_(floating_roof)", "160", "240"],
-    "distillation": ["mxgraph.pid.vessels.tower_with_packing", "160", "240"],
+    "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "150", "120"],
+    "mixtank": ["mxgraph.pid.vessels.jacketed_mixing_vessel", "150", "200"],
+    "storagetank": ["mxgraph.pid.vessels.tank_(floating_roof)", "160", "200"],
+    "distillation": ["mxgraph.pid.vessels.tower_with_packing", "160", "200"],
     "binarydistillation": ["mxgraph.pid.vessels.tower_with_packing", "80", "220"],
     "shortcutcolumn": ["mxgraph.pid.vessels.tower_with_packing", "80", "220"],
     "duplicator": ["process", "100", "100"],
@@ -54,8 +54,8 @@ shapes = {
         "97",
     ],
     "rotaryvacuumfilter": ["mxgraph.pid.filters.press_filter", "52", "95"],
-    "crushingmill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "80", "99"],
-    "hammermill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "80", "99"],
+    "crushingmill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "150", "80"],
+    "hammermill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "150", "80"],
     "conveyingbelt": ["mxgraph.pid2misc.conveyor", "150", "40"],
     "pressurefilter": ["mxgraph.pid.filters.press_filter", "91", "30"],
     "solidscentrifuge": [
@@ -63,7 +63,7 @@ shapes = {
         "100",
         "174",
     ],
-    "reactor": ["mxgraph.pid.vessels.reactor", "160", "240"],
+    "reactor": ["mxgraph.pid.vessels.reactor", "160", "200"],
     "screwpress": ["mxgraph.pid.shaping_machines.extruder_(screw)", "100", "70"],
 }
 
@@ -304,10 +304,11 @@ def create_network(sys, graph, visited):
 
 
 def draw(sys, 
-         measure="mass", 
          filename="diagram", 
          grid_x=300, 
-         grid_y=200):
+         grid_y=250,
+         compounds = None
+         ):
     """
     Draws a diagram of the system using the draw.io format.
 
@@ -316,6 +317,185 @@ def draw(sys,
     draw_io(my_system, measure="mass", filename="my_system_diagram")
     This will generate a diagram of the system and save it as "my_system_diagram.drawio".
     """
+
+    path = sys.unit_path
+    groups = []
+    subsystems = sys.subsystems
+    for u in path:
+        groups.append(u.system)
+    groups = set(groups)
+    colors = dict([(g, color_list(i)) for i, g in enumerate(groups)])
+
+    G, l = layout(sys)
+    pos = {}
+    for (l, p) in zip(G.vs["label"], l.coords):
+        pos[l] = [p[0] * grid_x, p[1] * grid_y]
+
+    # Create the root element
+    root = ET.Element("mxGraphModel")
+    root.set("dx", "846")
+    root.set("dy", "900")
+    root.set("grid", "1")
+    root.set("gridSize", "10")
+    root.set("guides", "1")
+    root.set("tooltips", "1")
+    root.set("connect", "1")
+    root.set("arrows", "1")
+    root.set("fold", "1")
+    root.set("page", "1")
+    root.set("pageScale", "1")
+    root.set("pageWidth", "1150")
+    root.set("pageHeight", "1150")
+    root.set("math", "0")
+    root.set("shadow", "0")
+
+    root.append(ET.Comment("Created by the Sustainable Energy Systems Analysis Group"))
+
+    parent = ET.SubElement(root, "root")
+    root_parent = ET.SubElement(parent, "mxCell")
+    root_parent.set("id", "0")
+
+    # Add default parent element
+    default_parent = ET.SubElement(parent, "mxCell")
+    default_parent.set("id", "1")
+    default_parent.set("parent", "0")
+
+    in_ys = 0
+    out_ys = 0
+    for u in path:
+        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
+
+        elem = ET.SubElement(parent, "mxCell")
+        elem.set("id", u.ID)
+        elem.set("value", u.ID)
+        elem.set("style", style)
+        elem.set("vertex", "1")
+        elem.set("parent", "1")
+
+        geometry = ET.SubElement(elem, "mxGeometry")
+        geometry.set("x", str(pos[u.ID][0]))
+        geometry.set("y", str(pos[u.ID][1]))
+        geometry.set("width", get_shape(u)[1])
+        geometry.set("height", get_shape(u)[2])
+        geometry.set("relative", "0")
+        geometry.set("as", "geometry")
+
+        for s in u.outs:
+            elem = ET.SubElement(parent, "mxCell")
+            elem.set("edge", "1")
+            geometry = ET.SubElement(elem, "mxGeometry")
+            geometry.set("relative", "1")
+            geometry.set("as", "geometry")
+            elem.set("parent", "1")
+            if s.source and s.sink:
+                elem.set("id", f"e{s.source.ID}-{s.sink.ID}")
+                elem.set(
+                    "style",
+                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                )
+                elem.set("source", f"{s.source.ID}")
+                elem.set("target", f"{s.sink.ID}")
+                label = f"""{s.ID}
+"""
+                if compounds != None:
+                    for c in compounds:
+                        if c in [c.ID for c in s.available_chemicals]:
+                            label += f"""{c}: {s.imass[c]:.2f}
+"""
+                elem.set("value", label)
+            else:
+                elem.set("source", f"{u.ID}")
+                elem.set("target", f"o{s.ID}")
+                elem.set(
+                    "style",
+                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                )
+                outNode = ET.SubElement(parent, "mxCell")
+                outNode.set("id", f"o{s.ID}")
+                label = f"""{s.ID}
+"""
+                if compounds != None:
+                    for c in compounds:
+                        if c in [c.ID for c in s.available_chemicals]:
+                            label += f"""{c}: {s.imass[c]:.2f}
+"""
+                outNode.set("value", label)
+                # outNode.set("value", s.ID)
+                outNode.set(
+                    "style",
+                    "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;align=center;",
+                )
+                outNode.set("vertex", "1")
+                outNode.set("parent", "1")
+
+                geometry = ET.SubElement(outNode, "mxGeometry")
+                geometry.set("x", str(pos[s.ID][0]))
+                geometry.set("y", str(pos[s.ID][1]))
+                geometry.set("width", str(100))
+                geometry.set("height", str(60))
+                geometry.set("as", "geometry")
+                out_ys += 150
+
+        for s in u.ins:
+            elem = ET.SubElement(parent, "mxCell")
+            elem.set("edge", "1")
+            elem.set("parent", "1")
+            elem.set("id", f"i{s.ID}-{u.ID}")
+            elem.set(
+                "style",
+                "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=12;align=center;",
+            )
+            geometry = ET.SubElement(elem, "mxGeometry")
+            geometry.set("relative", "1")
+            geometry.set("as", "geometry")
+            if s.source == None:
+                elem.set("target", f"{u.ID}")
+                elem.set("source", f"i{s.ID}")
+                inNode = ET.SubElement(parent, "mxCell")
+                inNode.set("id", f"i{s.ID}")
+                label = f"""{s.ID}
+"""
+                if compounds != None:
+                    for c in compounds:
+                        if c in [c.ID for c in s.available_chemicals]:
+                            label += f"""{c}: {s.imass[c]:.2f}
+"""
+                inNode.set("value", label)
+                # inNode.set("value", s.ID)
+                inNode.set(
+                    "style",
+                    "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                )
+                inNode.set("vertex", "1")
+                inNode.set("parent", "1")
+
+                geometry = ET.SubElement(inNode, "mxGeometry")
+                # geometry.set("x", str(0))
+                # geometry.set("y", str(in_ys))
+                geometry.set("x", str(pos[s.ID][0]))
+                geometry.set("y", str(pos[s.ID][1]))
+                geometry.set("width", str(100))
+                geometry.set("height", str(60))
+                geometry.set("as", "geometry")
+                in_ys += 150
+
+    # Write the XML tree to a file
+    tree = ET.ElementTree(root)
+    if "png" in filename or "jpg" in filename:
+        ig.plot(G, target=filename)
+        return filename
+    else:
+        with open(filename + ".drawio", "wb") as file:
+            tree.write(file, encoding="utf-8", xml_declaration=True)
+        return filename + ".drawio"
+
+# draw(sys, measure="mass", filename="networkx_graph")
+
+
+# %%
+def layout(
+        sys
+):
     G = ig.Graph(directed=True)
     vertices = {}
     i = 0
@@ -351,164 +531,7 @@ def draw(sys,
     l = G.layout("tree")
     l.rotate(270)
     l.mirror(1)
-
-    path = sys.unit_path
-    groups = ["root"]
-    subsystems = sys.subsystems
-    for u in path:
-        u.group = "root"
-        for s in subsystems:
-            if u in s.units:
-                u.group = s.ID
-                groups.append(s.ID)
-    groups = set(groups)
-    colors = dict([(g, color_list(i)) for i, g in enumerate(groups)])
-
-    pos = {}
-    for (l, p) in zip(G.vs["label"], l.coords):
-        pos[l] = [p[0] * grid_x, p[1] * grid_y]
-
-    # Create the root element
-    root = ET.Element("mxGraphModel")
-    root.set("dx", "846")
-    root.set("dy", "900")
-    root.set("grid", "1")
-    root.set("gridSize", "10")
-    root.set("guides", "1")
-    root.set("tooltips", "1")
-    root.set("connect", "1")
-    root.set("arrows", "1")
-    root.set("fold", "1")
-    root.set("page", "1")
-    root.set("pageScale", "1")
-    root.set("pageWidth", "1200")
-    root.set("pageHeight", "1200")
-    root.set("math", "0")
-    root.set("shadow", "0")
-
-    root.append(ET.Comment("Created by the Sustainable Energy Systems Analysis Group"))
-
-    parent = ET.SubElement(root, "root")
-    root_parent = ET.SubElement(parent, "mxCell")
-    root_parent.set("id", "0")
-
-    # Add default parent element
-    default_parent = ET.SubElement(parent, "mxCell")
-    default_parent.set("id", "1")
-    default_parent.set("parent", "0")
-
-    margin = 50
-    padding = 10
-    layout = {}
-    unit_width = 210
-    unit_height = 200
-
-    in_ys = 0
-    out_ys = 0
-    for u in path:
-        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.group]};verticalLabelPosition=bottom;"
-
-        elem = ET.SubElement(parent, "mxCell")
-        elem.set("id", u.ID)
-        elem.set("value", u.ID)
-        elem.set("style", style)
-        elem.set("vertex", "1")
-        elem.set("parent", "1")
-
-        geometry = ET.SubElement(elem, "mxGeometry")
-        geometry.set("x", str(pos[u.ID][0]))
-        geometry.set("y", str(pos[u.ID][1]))
-        geometry.set("width", get_shape(u)[1])
-        geometry.set("height", get_shape(u)[2])
-        geometry.set("relative", "0")
-        geometry.set("as", "geometry")
-
-        for s in u.outs:
-            elem = ET.SubElement(parent, "mxCell")
-            elem.set("edge", "1")
-            geometry = ET.SubElement(elem, "mxGeometry")
-            geometry.set("relative", "1")
-            geometry.set("as", "geometry")
-            elem.set("parent", "1")
-            if s.source and s.sink:
-                elem.set("id", f"e{s.source.ID}-{s.sink.ID}")
-                elem.set(
-                    "style",
-                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
-                )
-                elem.set("source", f"{s.source.ID}")
-                elem.set("target", f"{s.sink.ID}")
-                elem.set("value", s.ID)
-            else:
-                elem.set("source", f"{u.ID}")
-                elem.set("target", f"o{s.ID}")
-                elem.set(
-                    "style",
-                    "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
-                )
-                outNode = ET.SubElement(parent, "mxCell")
-                outNode.set("id", f"o{s.ID}")
-                outNode.set("value", s.ID)
-                outNode.set(
-                    "style",
-                    "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;align=center;",
-                )
-                outNode.set("vertex", "1")
-                outNode.set("parent", "1")
-
-                geometry = ET.SubElement(outNode, "mxGeometry")
-                geometry.set("x", str(pos[s.ID][0]))
-                geometry.set("y", str(pos[s.ID][1]))
-                geometry.set("width", str(100))
-                geometry.set("height", str(60))
-                geometry.set("as", "geometry")
-                out_ys += 150
-
-        for s in u.ins:
-            elem = ET.SubElement(parent, "mxCell")
-            elem.set("edge", "1")
-            elem.set("parent", "1")
-            elem.set("id", f"i{s.ID}-{u.ID}")
-            elem.set(
-                "style",
-                "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=12;align=center;",
-            )
-            geometry = ET.SubElement(elem, "mxGeometry")
-            geometry.set("relative", "1")
-            geometry.set("as", "geometry")
-            if s.source == None:
-                elem.set("target", f"{u.ID}")
-                elem.set("source", f"i{s.ID}")
-                inNode = ET.SubElement(parent, "mxCell")
-                inNode.set("id", f"i{s.ID}")
-                inNode.set("value", s.ID)
-                inNode.set(
-                    "style",
-                    "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=18;align=center;",
-                )
-                inNode.set("vertex", "1")
-                inNode.set("parent", "1")
-
-                geometry = ET.SubElement(inNode, "mxGeometry")
-                # geometry.set("x", str(0))
-                # geometry.set("y", str(in_ys))
-                geometry.set("x", str(pos[s.ID][0]))
-                geometry.set("y", str(pos[s.ID][1]))
-                print("x" + str(pos[s.ID][0]))
-                geometry.set("width", str(100))
-                geometry.set("height", str(60))
-                geometry.set("as", "geometry")
-                in_ys += 150
-
-    # Write the XML tree to a file
-    tree = ET.ElementTree(root)
-    if "png" in filename or "jpg" in filename:
-        ig.plot(G, target=filename)
-        return filename
-    else:
-        with open(filename + ".drawio", "wb") as file:
-            tree.write(file, encoding="utf-8", xml_declaration=True)
-        return filename + ".drawio"
+    return G, l
 
 # draw(sys, measure="mass", filename="networkx_graph")
 
