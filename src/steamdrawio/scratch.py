@@ -32,10 +32,10 @@ shapes = {
     ],
     "hxutility": ["mxgraph.pid.heat_exchangers.heater", "60", "60"],
     "hxprocess": ["mxgraph.pid.heat_exchangers.condenser", "60", "60"],
-    "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "200", "120"],
-    "mixtank": ["mxgraph.pid.vessels.jacketed_mixing_vessel", "200", "240"],
-    "storagetank": ["mxgraph.pid.vessels.tank_(floating_roof)", "160", "240"],
-    "distillation": ["mxgraph.pid.vessels.tower_with_packing", "160", "240"],
+    "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "150", "120"],
+    "mixtank": ["mxgraph.pid.vessels.jacketed_mixing_vessel", "150", "200"],
+    "storagetank": ["mxgraph.pid.vessels.tank_(floating_roof)", "160", "200"],
+    "distillation": ["mxgraph.pid.vessels.tower_with_packing", "160", "200"],
     "binarydistillation": ["mxgraph.pid.vessels.tower_with_packing", "80", "220"],
     "shortcutcolumn": ["mxgraph.pid.vessels.tower_with_packing", "80", "220"],
     "duplicator": ["process", "100", "100"],
@@ -54,8 +54,8 @@ shapes = {
         "97",
     ],
     "rotaryvacuumfilter": ["mxgraph.pid.filters.press_filter", "52", "95"],
-    "crushingmill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "80", "99"],
-    "hammermill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "80", "99"],
+    "crushingmill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "150", "80"],
+    "hammermill": ["mxgraph.pid.crushers_grinding.crusher_(hammer)", "150", "80"],
     "conveyingbelt": ["mxgraph.pid2misc.conveyor", "150", "40"],
     "pressurefilter": ["mxgraph.pid.filters.press_filter", "91", "30"],
     "solidscentrifuge": [
@@ -63,7 +63,7 @@ shapes = {
         "100",
         "174",
     ],
-    "reactor": ["mxgraph.pid.vessels.reactor", "160", "240"],
+    "reactor": ["mxgraph.pid.vessels.reactor", "160", "200"],
     "screwpress": ["mxgraph.pid.shaping_machines.extruder_(screw)", "100", "70"],
 }
 
@@ -251,6 +251,7 @@ def longest_path(paths):
 # %%
 def color_list(color):
     colors = [
+        "white",
         "#fcaf17",  # Michael Scott's World's Best Boss mug yellow
         "#4877b9",  # Dunder Mifflin blue
         "#f26b6c",  # Pam's sweater pink
@@ -304,10 +305,10 @@ def create_network(sys, graph, visited):
 
 
 def draw(sys, 
-         measure="mass", 
          filename="diagram", 
          grid_x=300, 
-         grid_y=200):
+         grid_y=250
+         ):
     """
     Draws a diagram of the system using the draw.io format.
 
@@ -316,51 +317,13 @@ def draw(sys,
     draw_io(my_system, measure="mass", filename="my_system_diagram")
     This will generate a diagram of the system and save it as "my_system_diagram.drawio".
     """
-    G = ig.Graph(directed=True)
-    vertices = {}
-    i = 0
-    for u in sys.units:
-        vertices[u.ID] = i
-        i += 1
-    for s in sys.feeds:
-        vertices[s.ID] = i
-        i += 1
-    for s in sys.products:
-        vertices[s.ID] = i
-        i += 1
-
-    edges = []
-    labels = []
-    for u in sys.streams:
-        if u.source and u.sink:
-            edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
-            labels.append(u.ID)
-        elif u.source and not u.sink:
-            edges.append((vertices[u.source.ID], vertices[u.ID]))
-            labels.append(u.ID)
-        elif not u.source and u.sink:
-            edges.append((vertices[u.ID], vertices[u.sink.ID]))
-            labels.append(u.ID)
-    G.add_vertices(len(vertices))
-    G.add_edges(edges)
-
-    G.vs["label"] = list(vertices.keys())
-    
-    G.es["label"] = labels
-
-    l = G.layout("tree")
-    l.rotate(270)
-    l.mirror(1)
+    G, l = layout(sys)
 
     path = sys.unit_path
-    groups = ["root"]
+    groups = []
     subsystems = sys.subsystems
     for u in path:
-        u.group = "root"
-        for s in subsystems:
-            if u in s.units:
-                u.group = s.ID
-                groups.append(s.ID)
+        groups.append(u.system)
     groups = set(groups)
     colors = dict([(g, color_list(i)) for i, g in enumerate(groups)])
 
@@ -381,8 +344,8 @@ def draw(sys,
     root.set("fold", "1")
     root.set("page", "1")
     root.set("pageScale", "1")
-    root.set("pageWidth", "1200")
-    root.set("pageHeight", "1200")
+    root.set("pageWidth", "1150")
+    root.set("pageHeight", "1150")
     root.set("math", "0")
     root.set("shadow", "0")
 
@@ -397,16 +360,10 @@ def draw(sys,
     default_parent.set("id", "1")
     default_parent.set("parent", "0")
 
-    margin = 50
-    padding = 10
-    layout = {}
-    unit_width = 210
-    unit_height = 200
-
     in_ys = 0
     out_ys = 0
     for u in path:
-        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.group]};verticalLabelPosition=bottom;"
+        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
 
         elem = ET.SubElement(parent, "mxCell")
         elem.set("id", u.ID)
@@ -494,7 +451,6 @@ def draw(sys,
                 # geometry.set("y", str(in_ys))
                 geometry.set("x", str(pos[s.ID][0]))
                 geometry.set("y", str(pos[s.ID][1]))
-                print("x" + str(pos[s.ID][0]))
                 geometry.set("width", str(100))
                 geometry.set("height", str(60))
                 geometry.set("as", "geometry")
@@ -508,3 +464,92 @@ def draw(sys,
 
 # draw(sys, measure="mass", filename="networkx_graph")
 
+#%%#%%
+import sys 
+sys.path.append("/Users/mark/Github/steamdrawio/src/steamdrawio/")
+
+
+from ethanol import sys 
+
+# %%
+def layout(
+        sys
+):
+    G = ig.Graph(directed=True)
+    vertices = {}
+    i = 0
+    for u in sys.units:
+        vertices[u.ID] = i
+        i += 1
+    for s in sys.feeds:
+        vertices[s.ID] = i
+        i += 1
+    for s in sys.products:
+        vertices[s.ID] = i
+        i += 1
+
+    edges = []
+    labels = []
+    for u in sys.streams:
+        if u.source and u.sink:
+            edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
+            labels.append(u.ID)
+        elif u.source and not u.sink:
+            edges.append((vertices[u.source.ID], vertices[u.ID]))
+            labels.append(u.ID)
+        elif not u.source and u.sink:
+            edges.append((vertices[u.ID], vertices[u.sink.ID]))
+            labels.append(u.ID)
+    G.add_vertices(len(vertices))
+    G.add_edges(edges)
+
+    G.vs["label"] = list(vertices.keys())
+    
+    G.es["label"] = labels
+
+    l = G.layout("tree")
+    l.rotate(270)
+    l.mirror(1)
+    return G, l
+
+G, l = layout(sys)
+#%%
+draw(sys)
+
+#%%
+dir(G)
+# %%
+pos = {}
+grid_x = 1
+grid_y = 1
+for (l, p) in zip(G.vs["label"], l.coords):
+    pos[l] = [p[0] * grid_x, p[1] * grid_y]
+# %%
+pos
+# %%
+G
+# %%
+ig.plot(G)
+# %%
+path = sys.unit_path
+groups = ["root"]
+subsystems = sys.subsystems
+for u in path:
+    u.group = "root"
+    for s in subsystems:
+        if u in s.units:
+            u.group = s.ID
+            groups.append(s.ID)
+groups = set(groups)
+colors = dict([(g, color_list(i)) for i, g in enumerate(groups)])
+groups
+# %%
+subsystems
+# %%
+sys.diagram('cluster', format="png")
+# %%
+for u in sys.units:
+    print(u.ID, u.system.ID)
+# %%
+sys.subsystems[0].ID
+# %%

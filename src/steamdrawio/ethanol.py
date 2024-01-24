@@ -301,136 +301,136 @@ sys = bst.main_flowsheet.create_system("CornEthanol")
 sys.diagram()
 # %%
 sys.simulate()
-# %%
-sys.show(flow="tonnes/day")
-# %%
-# Simple mass balance
-print("Inputs")
-input_streams = reversed(sorted(sys.ins, key=lambda s: s.F_mass))
-for i in input_streams:
-    print(i.ID, i.F_mass, "tonnes/day")
+# # %%
+# sys.show(flow="tonnes/day")
+# # %%
+# # Simple mass balance
+# print("Inputs")
+# input_streams = reversed(sorted(sys.ins, key=lambda s: s.F_mass))
+# for i in input_streams:
+#     print(i.ID, i.F_mass, "tonnes/day")
 
-print("\nOutputs")
-output_streams = reversed(sorted(sys.outs, key=lambda s: s.F_mass))
-for i in output_streams:
-    print(i.ID, i.F_mass, "tonnes/day")
-print("\n")
-# %%
-# Techno-economic analysis
-class TEA(bst.TEA):
-    labor_cost = 0
+# print("\nOutputs")
+# output_streams = reversed(sorted(sys.outs, key=lambda s: s.F_mass))
+# for i in output_streams:
+#     print(i.ID, i.F_mass, "tonnes/day")
+# print("\n")
+# # %%
+# # Techno-economic analysis
+# class TEA(bst.TEA):
+#     labor_cost = 0
 
-    def _FOC(self, FCI):
-        return FCI *0.13 + self.labor_cost
+#     def _FOC(self, FCI):
+#         return FCI *0.13 + self.labor_cost
 
-tea = TEA(system=sys,
-             IRR=0.1,
-             duration=(2018, 2038),
-             depreciation='MACRS7',
-             income_tax=0.21,
-             operating_days=333,
-             lang_factor=4.5, # ratio of total fixed capital cost to equipment cost
-             construction_schedule=(0.4, 0.6),
-             WC_over_FCI=0.05, #working capital / fixed capital investment
-            startup_months=3,
-            startup_FOCfrac=1,
-            startup_salesfrac=0,
-            startup_VOCfrac=0,
-             finance_fraction = 0.4,
-             finance_years=10,
-             finance_interest=0.07)
-tea.labor_cost = 1037000
-msp = tea.solve_price(ethanol_out)
-print("Fixed Capital Investment: ", tea.FCI/1e6, "million USD")
-rho_e = 2.96 # kg/gallon
-print("Ethanol Minimum Selling Price: $", msp*rho_e, "/gallon") # 1 gallon of ethanol weights 2.96 kg
-# %%
-# Equipment Costs
-equipment_costs = pd.DataFrame(dict((k.ID, k.installed_cost/1**6) for k in sys.units), index=[0]).T
+# tea = TEA(system=sys,
+#              IRR=0.1,
+#              duration=(2018, 2038),
+#              depreciation='MACRS7',
+#              income_tax=0.21,
+#              operating_days=333,
+#              lang_factor=4.5, # ratio of total fixed capital cost to equipment cost
+#              construction_schedule=(0.4, 0.6),
+#              WC_over_FCI=0.05, #working capital / fixed capital investment
+#             startup_months=3,
+#             startup_FOCfrac=1,
+#             startup_salesfrac=0,
+#             startup_VOCfrac=0,
+#              finance_fraction = 0.4,
+#              finance_years=10,
+#              finance_interest=0.07)
+# tea.labor_cost = 1037000
+# msp = tea.solve_price(ethanol_out)
+# print("Fixed Capital Investment: ", tea.FCI/1e6, "million USD")
+# rho_e = 2.96 # kg/gallon
+# print("Ethanol Minimum Selling Price: $", msp*rho_e, "/gallon") # 1 gallon of ethanol weights 2.96 kg
+# # %%
+# # Equipment Costs
+# equipment_costs = pd.DataFrame(dict((k.ID, k.installed_cost/1**6) for k in sys.units), index=[0]).T
 
-equipment_costs[equipment_costs[0]>250000].T.plot.bar( stacked=True, figsize=(7, 12))
+# equipment_costs[equipment_costs[0]>250000].T.plot.bar( stacked=True, figsize=(7, 12))
 
-plt.style.use("ggplot")
-plt.xlabel("Equipment")
-plt.xticks([])
-plt.ylabel("Installed Cost (MM$)")
-plt.legend(loc="upper right", bbox_to_anchor=(1.5, 1))
-plt.grid("major", axis="y")
-# %%
-# Operating Costs
-operating_costs = pd.DataFrame({
-    "Labor": tea.labor_cost/1e6,
-    "Corn": corn.price*corn.F_mass*tea.operating_hours/1e6,
-    "Lime": limeIn.price*limeIn.F_mass*tea.operating_hours/1e6,
-    "Ammonia": ammoniaIn.price*ammoniaIn.F_mass*tea.operating_hours/1e6,
-    "Utilities": tea.utility_cost/1e6,
-    "Depreciation": tea.annual_depreciation/1e6,
-    "Capital": tea.FCI*0.13/1e6
-}, index=[0])
+# plt.style.use("ggplot")
+# plt.xlabel("Equipment")
+# plt.xticks([])
+# plt.ylabel("Installed Cost (MM$)")
+# plt.legend(loc="upper right", bbox_to_anchor=(1.5, 1))
+# plt.grid("major", axis="y")
+# # %%
+# # Operating Costs
+# operating_costs = pd.DataFrame({
+#     "Labor": tea.labor_cost/1e6,
+#     "Corn": corn.price*corn.F_mass*tea.operating_hours/1e6,
+#     "Lime": limeIn.price*limeIn.F_mass*tea.operating_hours/1e6,
+#     "Ammonia": ammoniaIn.price*ammoniaIn.F_mass*tea.operating_hours/1e6,
+#     "Utilities": tea.utility_cost/1e6,
+#     "Depreciation": tea.annual_depreciation/1e6,
+#     "Capital": tea.FCI*0.13/1e6
+# }, index=[0])
 
-operating_costs.plot.bar(stacked=True, figsize=(7, 12))
-plt.xlabel("Operating Cost")
-plt.ylabel("Annual Cost (MM$)")
-plt.xticks([])
-plt.grid("major", axis="y")
-# %%
-# Sensitivity Analysis
-sensitivity_results = []
+# operating_costs.plot.bar(stacked=True, figsize=(7, 12))
+# plt.xlabel("Operating Cost")
+# plt.ylabel("Annual Cost (MM$)")
+# plt.xticks([])
+# plt.grid("major", axis="y")
+# # %%
+# # Sensitivity Analysis
+# sensitivity_results = []
 
-# For each sensitivity parameter, we will calculate the minimum and maximum ethanol selling price by changing the parameter by 20%, then, we will return the value to its original (baseline) value
-baseline = corn.price
-corn.price = baseline*1.2
-high = tea.solve_price(ethanol_out)
-corn.price = baseline*0.8
-low = tea.solve_price(ethanol_out)
-corn.price = baseline
-sensitivity_results.append(["Corn Price", low*rho_e, high*rho_e])
+# # For each sensitivity parameter, we will calculate the minimum and maximum ethanol selling price by changing the parameter by 20%, then, we will return the value to its original (baseline) value
+# baseline = corn.price
+# corn.price = baseline*1.2
+# high = tea.solve_price(ethanol_out)
+# corn.price = baseline*0.8
+# low = tea.solve_price(ethanol_out)
+# corn.price = baseline
+# sensitivity_results.append(["Corn Price", low*rho_e, high*rho_e])
 
-baseline = limeIn.price
-limeIn.price = baseline*1.2
-high = tea.solve_price(ethanol_out)
-limeIn.price = baseline*0.8
-low = tea.solve_price(ethanol_out)
-limeIn.price = baseline
-sensitivity_results.append(["Lime Price", low*rho_e, high*rho_e])
+# baseline = limeIn.price
+# limeIn.price = baseline*1.2
+# high = tea.solve_price(ethanol_out)
+# limeIn.price = baseline*0.8
+# low = tea.solve_price(ethanol_out)
+# limeIn.price = baseline
+# sensitivity_results.append(["Lime Price", low*rho_e, high*rho_e])
 
-# we have to resimulate the system because we changed a process variable (ethanol yield)
-baseline = ethanol_yield
-ethanol_yield = baseline*1.2
-tea.system.simulate()
-high = tea.solve_price(ethanol_out)
-ethanol_yield = baseline*0.8
-tea.system.simulate()
-low = tea.solve_price(ethanol_out)
-ethanol_yield = baseline
-tea.system.simulate()
-sensitivity_results.append(["Ethanol Yield", low*rho_e, high*rho_e])
+# # we have to resimulate the system because we changed a process variable (ethanol yield)
+# baseline = ethanol_yield
+# ethanol_yield = baseline*1.2
+# tea.system.simulate()
+# high = tea.solve_price(ethanol_out)
+# ethanol_yield = baseline*0.8
+# tea.system.simulate()
+# low = tea.solve_price(ethanol_out)
+# ethanol_yield = baseline
+# tea.system.simulate()
+# sensitivity_results.append(["Ethanol Yield", low*rho_e, high*rho_e])
 
-baseline = 0.1
-tea.IRR = baseline*1.2
-high = tea.solve_price(ethanol_out)
-tea.IRR = baseline*0.8
-low = tea.solve_price(ethanol_out)
-tea.IRR = baseline
-sensitivity_results.append(["IRR", low*rho_e, high*rho_e])
+# baseline = 0.1
+# tea.IRR = baseline*1.2
+# high = tea.solve_price(ethanol_out)
+# tea.IRR = baseline*0.8
+# low = tea.solve_price(ethanol_out)
+# tea.IRR = baseline
+# sensitivity_results.append(["IRR", low*rho_e, high*rho_e])
 
-# %%
-shifted_sensitivity_results = []
-for i in sensitivity_results:
-    shifted_sensitivity_results.append([i[0], i[1]-msp*rho_e, i[2]-msp*rho_e])
+# # %%
+# shifted_sensitivity_results = []
+# for i in sensitivity_results:
+#     shifted_sensitivity_results.append([i[0], i[1]-msp*rho_e, i[2]-msp*rho_e])
 
-sorted_sensitivity_results = sorted(shifted_sensitivity_results, key=lambda x: abs(x[1]))
+# sorted_sensitivity_results = sorted(shifted_sensitivity_results, key=lambda x: abs(x[1]))
 
-plt.figure(figsize=(10, 8))
-plt.barh(range(len(shifted_sensitivity_results)), [i[1] for i in sorted_sensitivity_results])
+# plt.figure(figsize=(10, 8))
+# plt.barh(range(len(shifted_sensitivity_results)), [i[1] for i in sorted_sensitivity_results])
 
-plt.barh(range(len(shifted_sensitivity_results)), [i[2] for i in sorted_sensitivity_results])
-plt.yticks(range(len(shifted_sensitivity_results)), [i[0] for i in sorted_sensitivity_results])
-plt.xlabel("Corn Ethanol Selling Price Sensitivity (USD/gallon)")
-plt.xticks([i/100 for i in range(0, 100, 25)], [("%.2f" % (msp*rho_e+i/100)) for i in range(0, 100, 25)])
+# plt.barh(range(len(shifted_sensitivity_results)), [i[2] for i in sorted_sensitivity_results])
+# plt.yticks(range(len(shifted_sensitivity_results)), [i[0] for i in sorted_sensitivity_results])
+# plt.xlabel("Corn Ethanol Selling Price Sensitivity (USD/gallon)")
+# plt.xticks([i/100 for i in range(0, 100, 25)], [("%.2f" % (msp*rho_e+i/100)) for i in range(0, 100, 25)])
 
-# %%
-# %%
-# problem statement
+# # %%
+# # %%
+# # problem statement
 
 
