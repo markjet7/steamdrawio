@@ -3,19 +3,19 @@
 # Step 1: Make changes to your code
 # This step is manual and not included in this script
 
-# Step 2: Update the version number in setup.py
+# Step 2: Update the version number in setup.py and pyproject.toml
 # This step is manual and not included in this script
 # remember to update the pyproject.toml file as well
 
 # Step 3: Rebuild your package
+# Remember to delete the old distribution files in the dist/ directory before running the python setup.py sdist bdist_wheel command to avoid uploading old packages to PyPI
+rm -r dist/*
 python setup.py sdist bdist_wheel
 
 # Step 4: Commit your changes to your local Git repository
 git add .
-git commit -m "Update package to version x.y.z" # Replace "x.y.z" with your new version number
+git commit -m "Update package to version 0.4.3" # Replace "x.y.z" with your new version number
 
 # Step 5: Push your changes to GitHub
 git push origin main # Replace "main" with the name of your branch if it's different
 
-# Remember to delete the old distribution files in the dist/ directory before running the python setup.py sdist bdist_wheel command to avoid uploading old packages to PyPI
-rm -r dist/*
