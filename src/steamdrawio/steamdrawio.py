@@ -502,9 +502,13 @@ def draw(sys,
 
     # Write the XML tree to a file
     tree = ET.ElementTree(root)
-    with open(filename + ".drawio", "wb") as file:
-        tree.write(file, encoding="utf-8", xml_declaration=True)
-    return filename + ".drawio"
+    if "png" in filename or "jpg" in filename:
+        ig.plot(G, target=filename)
+        return filename
+    else:
+        with open(filename + ".drawio", "wb") as file:
+            tree.write(file, encoding="utf-8", xml_declaration=True)
+        return filename + ".drawio"
 
 # draw(sys, measure="mass", filename="networkx_graph")
 

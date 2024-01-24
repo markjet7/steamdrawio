@@ -5,6 +5,8 @@ setup.py
 src/steamdrawio/__init__.py
 src/steamdrawio/compounds.py
 src/steamdrawio/ethanol_tutorial.py
+src/steamdrawio/layout_nodes.py
+src/steamdrawio/misc.py
 src/steamdrawio/steamdrawio.py
 src/steamdrawio/test.py
 steamdrawio.egg-info/PKG-INFO

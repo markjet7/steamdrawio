@@ -1,8 +1,12 @@
 # %%
+import pprint
 import xml.etree.ElementTree as ET
 import random
-import networkx as nx
 import importlib
+
+import igraph as ig
+
+# from layout_nodes import *
 
 # %%
 
@@ -26,14 +30,14 @@ shapes = {
         "50",
         "10",
     ],
-    "hxutility": ["mxgraph.pid.heat_exchangers.heater", "100", "60"],
-    "hxprocess": ["mxgraph.pid.heat_exchangers.condenser", "100", "60"],
+    "hxutility": ["mxgraph.pid.heat_exchangers.heater", "60", "60"],
+    "hxprocess": ["mxgraph.pid.heat_exchangers.condenser", "60", "60"],
     "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "200", "120"],
     "mixtank": ["mxgraph.pid.vessels.jacketed_mixing_vessel", "200", "240"],
     "storagetank": ["mxgraph.pid.vessels.tank_(floating_roof)", "160", "240"],
     "distillation": ["mxgraph.pid.vessels.tower_with_packing", "160", "240"],
-    "binarydistillation": ["mxgraph.pid.vessels.tower_with_packing", "200", "220"],
-    "shortcutcolumn": ["mxgraph.pid.vessels.tower_with_packing", "200", "220"],
+    "binarydistillation": ["mxgraph.pid.vessels.tower_with_packing", "80", "220"],
+    "shortcutcolumn": ["mxgraph.pid.vessels.tower_with_packing", "80", "220"],
     "duplicator": ["process", "100", "100"],
     "junction": ["process", "100", "140"],
     "massbalance": ["process", "100", "140"],
@@ -308,24 +312,43 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
     draw_io(my_system, measure="mass", filename="my_system_diagram")
     This will generate a diagram of the system and save it as "my_system_diagram.drawio".
     """
-    G = nx.DiGraph()
-    visited = []
-    G = create_network(sys, G, visited)
-    if is_module_installed("pygraphviz"):
-        pos = nx.nx_agraph.graphviz_layout(
-            G, prog="dot", args="-Grankdir=LR -Gminlen=2 -Gnodesep=2.5 -Granksep=1.2"
-        )
-    else:
-        # pos = nx.nx_pydot.graphviz_layout(
-        #     G, prog="dot"
-        # )
-        layout = ComputeHorizontalLayout(sys, 0, 0, 0, 0)
-        pos = {}
-        for k in layout:
-            pos[k] = (layout[k][0] * grid_x, layout[k][1] * grid_y)
+    G = ig.Graph(directed=True)
+    vertices = {}
+    i = 0
+    for u in sys.units:
+        vertices[u.ID] = i
+        i += 1
+    for s in sys.feeds:
+        vertices[s.ID] = i
+        i += 1
+    for s in sys.products:
+        vertices[s.ID] = i
+        i += 1
+
+    edges = []
+    labels = []
+    for u in sys.streams:
+        if u.source and u.sink:
+            edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
+            labels.append(u.ID)
+        elif u.source and not u.sink:
+            edges.append((vertices[u.source.ID], vertices[u.ID]))
+            labels.append(u.ID)
+        elif not u.source and u.sink:
+            edges.append((vertices[u.ID], vertices[u.sink.ID]))
+            labels.append(u.ID)
+    G.add_vertices(len(vertices))
+    G.add_edges(edges)
+
+    G.vs["label"] = list(vertices.keys())
+    
+    G.es["label"] = labels
+
+    l = G.layout("tree")
+    l.rotate(270)
+    l.mirror(1)
 
     path = sys.unit_path
-
     groups = ["root"]
     subsystems = sys.subsystems
     for u in path:
@@ -336,6 +359,11 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
                 groups.append(s.ID)
     groups = set(groups)
     colors = dict([(g, color_list(i)) for i, g in enumerate(groups)])
+
+    pos = {}
+    for (l, p) in zip(G.vs["label"], l.coords):
+        pos[l] = [p[0] * grid_x, p[1] * grid_y]
+
     # Create the root element
     root = ET.Element("mxGraphModel")
     root.set("dx", "846")
@@ -388,8 +416,8 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
         #     u.group = "root"
 
         geometry = ET.SubElement(elem, "mxGeometry")
-        geometry.set("x", str(pos[u][0]))
-        geometry.set("y", str(pos[u][1]))
+        geometry.set("x", str(pos[u.ID][0]))
+        geometry.set("y", str(pos[u.ID][1]))
         geometry.set("width", get_shape(u)[1])
         geometry.set("height", get_shape(u)[2])
         geometry.set("relative", "0")
@@ -429,8 +457,8 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
                 outNode.set("parent", "1")
 
                 geometry = ET.SubElement(outNode, "mxGeometry")
-                geometry.set("x", str(pos[s][0]))
-                geometry.set("y", str(pos[s][1]))
+                geometry.set("x", str(pos[s.ID][0]))
+                geometry.set("y", str(pos[s.ID][1]))
                 geometry.set("width", str(100))
                 geometry.set("height", str(60))
                 geometry.set("as", "geometry")
@@ -471,9 +499,14 @@ def draw(sys, measure="mass", filename="diagram", grid_x=300, grid_y=200):
 
     # Write the XML tree to a file
     tree = ET.ElementTree(root)
-    with open(filename + ".drawio", "wb") as file:
-        tree.write(file, encoding="utf-8", xml_declaration=True)
-    return filename + ".drawio"
+    if "png" in filename or "jpg" in filename:
+        ig.plot(G, target=filename)
+        return filename
+    else:
+        with open(filename + ".drawio", "wb") as file:
+            tree.write(file, encoding="utf-8", xml_declaration=True)
+        return filename + ".drawio"
 
+# draw(sys, measure="mass", filename="networkx_graph")
 
-# draw_io(sys, measure="mass", filename="networkx_graph")
+#%%
