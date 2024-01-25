@@ -207,7 +207,11 @@ def place_units(parent, path, pos, colors):
     return parent
 
 def connect_streams(parent, sys, pos):
+    connected = []
     for s in sys.streams:
+        connected.push(s.ID)
+        if s.ID in connected:
+            continue
         elem = ET.SubElement(parent, "mxCell")
         elem.set("edge", "1")
         elem.set("parent", "1")
