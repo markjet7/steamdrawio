@@ -326,7 +326,3 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None):
         return parent
 
 #%%
-from ethanol import sys 
-draw(sys)
-
-#%%
