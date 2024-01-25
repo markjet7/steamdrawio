@@ -184,23 +184,26 @@ def write_xml_to_file(root, filename):
         return filename + ".drawio"
 
 def place_units(parent, path, pos, colors):
+    placed = []
     for u in path:
-        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
+        placed.append(u.ID)
+        if u.ID not in placed:
+            style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
 
-        elem = ET.SubElement(parent, "mxCell")
-        elem.set("id", u.ID)
-        elem.set("value", u.ID)
-        elem.set("style", style)
-        elem.set("vertex", "1")
-        elem.set("parent", "1")
+            elem = ET.SubElement(parent, "mxCell")
+            elem.set("id", u.ID)
+            elem.set("value", u.ID)
+            elem.set("style", style)
+            elem.set("vertex", "1")
+            elem.set("parent", "1")
 
-        geometry = ET.SubElement(elem, "mxGeometry")
-        geometry.set("x", str(pos[u.ID][0]))
-        geometry.set("y", str(pos[u.ID][1]))
-        geometry.set("width", get_shape(u)[1])
-        geometry.set("height", get_shape(u)[2])
-        geometry.set("relative", "0")
-        geometry.set("as", "geometry")
+            geometry = ET.SubElement(elem, "mxGeometry")
+            geometry.set("x", str(pos[u.ID][0]))
+            geometry.set("y", str(pos[u.ID][1]))
+            geometry.set("width", get_shape(u)[1])
+            geometry.set("height", get_shape(u)[2])
+            geometry.set("relative", "0")
+            geometry.set("as", "geometry")
     return parent
 
 def connect_streams(parent, sys, pos):

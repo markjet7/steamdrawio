@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "steamdrawio"
-version = "0.4.3"
+version = "0.4.5"
 authors = [
   { name="Mark Mba Wright", email="markmw@iastate.edu" },
 ]
