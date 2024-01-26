@@ -82,16 +82,10 @@ def layout_system(
 ):
     G = ig.Graph(directed=True)
     vertices = {}
-    i = 0
-    for u in sys.units:
+    for (i, u) in enumerate(sys.units + sys.feeds + sys.products):
+        if u.ID in vertices.keys():
+            u.ID = u.ID+"2"
         vertices[u.ID] = i
-        i += 1
-    for s in sys.feeds:
-        vertices[s.ID] = i
-        i += 1
-    for s in sys.products:
-        vertices[s.ID] = i
-        i += 1
 
     edges = []
     labels = []
@@ -187,8 +181,7 @@ def place_units(parent, path, pos, colors):
     placed = []
     for u in path:
         if u.ID in placed:
-            u.ID = u.ID+"x"
-            print("Duplicate: " + u.ID)
+            u.ID = u.ID+"_"
         placed.append(u.ID)
         style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
 
@@ -212,7 +205,7 @@ def connect_streams(parent, sys, pos):
     connected = []
     for s in sys.streams:
         if s.ID in connected:
-            s.ID = s.ID+"x"
+            s.ID = s.ID+"_"
         connected.append(s.ID)
         elem = ET.SubElement(parent, "mxCell")
         elem.set("edge", "1")
@@ -229,7 +222,7 @@ def connect_streams(parent, sys, pos):
             elem.set("source", f"{s.source.ID}")
             elem.set("target", f"{s.sink.ID}")
             elem.set("value", f"{s.ID}")
-            elem.set("id", f"s{s.ID}")
+            elem.set("id", f"{s.ID}")
 
         elif s.source and s.sink==None:
             elem.set("id", f"o{s.ID}-{s.source.ID}")
@@ -336,44 +329,9 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None):
 
 #%%
 # from ethanol import sys 
-G, l = layout_system(sys)
-#%%
-ig.plot(G)
-# %%
-grid_x = 300
-grid_y = 300
-compounds = []
-filename = "main"
-path = sys.unit_path
-groups = set(u.system for u in path)
-
-colors = generate_colors(groups)
-G, layout = layout_system(sys)
-pos = calculate_positions(G, layout, grid_x, grid_y)
-
-root = create_root_element()
-parent = ET.SubElement(root, "root")
-root_parent = ET.SubElement(parent, "mxCell")
-root_parent.set("id", "0")
-
-# Add default parent element
-default_parent = ET.SubElement(parent, "mxCell")
-default_parent.set("id", "1")
-default_parent.set("parent", "0")
-
-parent = place_units(parent, path, pos, colors)
-parent = connect_streams(parent, sys, pos)
-parent = add_stream_labels(parent, sys, compounds)
-
-    # Write the XML tree to a file
-tree = ET.ElementTree(root)
-if "png" in filename or "jpg" in filename:
-    ig.plot(G, target=filename)
-    print(filename)
-    # return parent
-else:
-    with open(filename + ".drawio", "wb") as file:
-        tree.write(file, encoding="utf-8", xml_declaration=True)
-    print(filename + ".drawio")
-    # return parent
-# %%
+# # G, l = layout(sys)
+# #%%
+# with open("/Users/markmw/Downloads/pallavi/ATJ/main.py", "r") as f:
+#     eval(f)
+#     p = draw(sys, filename="test2")
+# #%%

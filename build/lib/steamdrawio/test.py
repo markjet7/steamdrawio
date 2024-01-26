@@ -8,6 +8,5 @@ from steamdrawio import *
 
 # %%
 
-
 draw(sys)
 # %%

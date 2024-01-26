@@ -10,11 +10,12 @@
 # Step 3: Rebuild your package
 # Remember to delete the old distribution files in the dist/ directory before running the python setup.py sdist bdist_wheel command to avoid uploading old packages to PyPI
 rm -r dist/*
+rm *.drawio
 python setup.py sdist bdist_wheel
 
 # Step 4: Commit your changes to your local Git repository
 git add .
-git commit -m "Update package to version 0.4.9" # Replace "x.y.z" with your new version number
+git commit -m "Update package to version 0.5.1" # Replace "x.y.z" with your new version number
 
 # Step 5: Push your changes to GitHub
 git push origin main # Replace "main" with the name of your branch if it's different
