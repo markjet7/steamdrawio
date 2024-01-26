@@ -84,6 +84,8 @@ def layout_system(
     vertices = {}
     for (i, u) in enumerate(sys.units + sys.feeds + sys.products):
         # check if the first letter is a number
+        if u.ID == "":
+            u.ID = "u"
         if u.ID[0].isdigit():
             u.ID = "u" + u.ID
         if u.ID in vertices.keys():
