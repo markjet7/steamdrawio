@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="steamdrawio",
-    version="0.5.1",
+    version="0.5.3",
     author="Mark Mba Wright",
     author_email="markmw@iastate.edu",
     packages=["steamdrawio"],

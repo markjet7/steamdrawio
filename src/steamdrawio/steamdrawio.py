@@ -83,6 +83,9 @@ def layout_system(
     G = ig.Graph(directed=True)
     vertices = {}
     for (i, u) in enumerate(sys.units + sys.feeds + sys.products):
+        # check if the first letter is a number
+        if u.ID[0].isdigit():
+            u.ID = "u" + u.ID
         if u.ID in vertices.keys():
             u.ID = u.ID+"2"
         vertices[u.ID] = i
