@@ -15,7 +15,7 @@ python setup.py sdist bdist_wheel
 
 # Step 4: Commit your changes to your local Git repository
 git add .
-git commit -m "Update package to version 0.6.5" # Replace "x.y.z" with your new version number
+git commit -m "Update package to version 0.6.5" # Replace "x.y.z" with your new version number. Remember to update setup.py and pyproject.toml before running this command
 
 # Step 5: Push your changes to GitHub
 git push origin main # Replace "main" with the name of your branch if it's different
