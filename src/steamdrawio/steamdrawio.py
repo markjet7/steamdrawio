@@ -290,6 +290,17 @@ def add_stream_labels(parent, sys, compounds):
                 elem.set("value", label)
     return parent
 
+def add_custom_labels(parent, sys, label_function):
+    for s in sys.streams:
+        try:
+            label = label_function(s)
+            elem = find_element(parent, f"{s.ID}")
+            if elem is not None:
+                elem.set("value", label)
+        except:
+            pass
+    return parent
+
 # Helper function to find an element
 def find_element(parent, id):
     for elem in parent:
@@ -298,7 +309,7 @@ def find_element(parent, id):
     return None
 
 # Updated draw function
-def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None):
+def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_function=None):
     path = sys.unit_path
     groups = set(u.system for u in path)
 
@@ -319,6 +330,9 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None):
     parent = place_units(parent, path, pos, colors)
     parent = connect_streams(parent, sys, pos)
     parent = add_stream_labels(parent, sys, compounds)
+    if label_function is not None:
+        parent = add_custom_labels(parent, sys, label_function)
+
 
         # Write the XML tree to a file
     tree = ET.ElementTree(root)
