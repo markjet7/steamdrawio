@@ -11,6 +11,7 @@
 # Remember to delete the old distribution files in the dist/ directory before running the python setup.py sdist bdist_wheel command to avoid uploading old packages to PyPI
 rm -r dist/*
 rm *.drawio
+rm -r build/lib/*
 python setup.py sdist bdist_wheel
 
 # Step 4: Commit your changes to your local Git repository
