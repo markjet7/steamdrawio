@@ -309,7 +309,7 @@ def find_element(parent, id):
     return None
 
 # Updated draw function
-def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_function=None):
+def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None):
     path = sys.unit_path
     groups = set(u.system for u in path)
 
@@ -330,8 +330,8 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_
     parent = place_units(parent, path, pos, colors)
     parent = connect_streams(parent, sys, pos)
     parent = add_stream_labels(parent, sys, compounds)
-    if label_function is not None:
-        parent = add_custom_labels(parent, sys, label_function)
+    if label_fn is not None:
+        parent = add_custom_labels(parent, sys, label_fn)
 
 
         # Write the XML tree to a file
