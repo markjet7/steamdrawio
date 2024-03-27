@@ -95,15 +95,19 @@ def layout_system(
     edges = []
     labels = []
     for u in sys.streams:
-        if u.source and u.sink:
-            edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
-            labels.append(u.ID)
-        elif u.source and not u.sink:
-            edges.append((vertices[u.source.ID], vertices[u.ID]))
-            labels.append(u.ID)
-        elif not u.source and u.sink:
-            edges.append((vertices[u.ID], vertices[u.sink.ID]))
-            labels.append(u.ID)
+        try:
+            if u.source and u.sink:
+                edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
+                labels.append(u.ID)
+            elif u.source and not u.sink:
+                edges.append((vertices[u.source.ID], vertices[u.ID]))
+                labels.append(u.ID)
+            elif not u.source and u.sink:
+                edges.append((vertices[u.ID], vertices[u.sink.ID]))
+                labels.append(u.ID)
+        except Exception as e:
+            print("Exception occurred while adding stream: " + u.ID + "\n" + str(e))
+            pass
     G.add_vertices(len(vertices))
     G.add_edges(edges)
 
@@ -224,13 +228,13 @@ def connect_streams(parent, sys, pos):
         geometry.set("relative", "1")
         geometry.set("as", "geometry")
         if s.source and s.sink:
+            elem.set("id", f"{s.ID}")
             elem.set("source", f"{s.source.ID}")
             elem.set("target", f"{s.sink.ID}")
             elem.set("value", f"{s.ID}")
-            elem.set("id", f"{s.ID}")
 
         elif s.source and s.sink==None:
-            elem.set("id", f"o{s.ID}-{s.source.ID}")
+            elem.set("id", f"o{s.ID}")
             elem.set("source", f"{s.source.ID}")
             elem.set("target", f"o{s.ID}")
             # elem.set("value", f"{s.ID}")
@@ -252,7 +256,7 @@ def connect_streams(parent, sys, pos):
             geometry.set("height", str(60))
             geometry.set("as", "geometry")
         elif s.sink and s.source ==None:
-            elem.set("id", f"i{s.ID}-{s.sink.ID}")
+            elem.set("id", f"i{s.ID}")
             elem.set("target", f"{s.sink.ID}")
             elem.set("source", f"i{s.ID}")
             inNode = ET.SubElement(parent, "mxCell")
@@ -305,6 +309,8 @@ def add_custom_labels(parent, sys, label_function):
 def find_element(parent, id):
     for elem in parent:
         if elem.get('id') == id:
+            return elem
+        if elem.get('id') == f"o{id}" or elem.get('id') == f"i{id}":
             return elem
     return None
 
