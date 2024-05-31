@@ -101,21 +101,6 @@ def layout_system(
             vertices[id] = len(vertices)
             return vertices[id]
     for u in sys.streams:
-<<<<<<< HEAD
-        try:
-            if u.source and u.sink:
-                edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
-                labels.append(u.ID)
-            elif u.source and not u.sink:
-                edges.append((vertices[u.source.ID], vertices[u.ID]))
-                labels.append(u.ID)
-            elif not u.source and u.sink:
-                edges.append((vertices[u.ID], vertices[u.sink.ID]))
-                labels.append(u.ID)
-        except Exception as e:
-            print("Exception occurred while adding stream: " + u.ID + "\n" + str(e))
-            pass
-=======
         if u.source and u.sink:
             edges.append((get_vertices(u.source.ID), get_vertices(u.sink.ID)))
             labels.append(u.ID)
@@ -125,7 +110,6 @@ def layout_system(
         elif not u.source and u.sink:
             edges.append((get_vertices(u.ID), get_vertices(u.sink.ID)))
             labels.append(u.ID)
->>>>>>> c9ff703 (Update package to version 0.5.5)
     G.add_vertices(len(vertices))
     G.add_edges(edges)
 
