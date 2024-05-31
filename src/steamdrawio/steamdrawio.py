@@ -94,7 +94,14 @@ def layout_system(
 
     edges = []
     labels = []
+    def get_vertices(id):
+        if id in vertices.keys():
+            return vertices[id]
+        else:
+            vertices[id] = len(vertices)
+            return vertices[id]
     for u in sys.streams:
+<<<<<<< HEAD
         try:
             if u.source and u.sink:
                 edges.append((vertices[u.source.ID], vertices[u.sink.ID]))
@@ -108,6 +115,17 @@ def layout_system(
         except Exception as e:
             print("Exception occurred while adding stream: " + u.ID + "\n" + str(e))
             pass
+=======
+        if u.source and u.sink:
+            edges.append((get_vertices(u.source.ID), get_vertices(u.sink.ID)))
+            labels.append(u.ID)
+        elif u.source and not u.sink:
+            edges.append((get_vertices(u.source.ID), get_vertices(u.ID)))
+            labels.append(u.ID)
+        elif not u.source and u.sink:
+            edges.append((get_vertices(u.ID), get_vertices(u.sink.ID)))
+            labels.append(u.ID)
+>>>>>>> c9ff703 (Update package to version 0.5.5)
     G.add_vertices(len(vertices))
     G.add_edges(edges)
 
@@ -118,6 +136,7 @@ def layout_system(
     l = G.layout("tree")
     l.rotate(270)
     l.mirror(1)
+    l.scale([3, 1])
     return G, l
 
 # %%
@@ -190,7 +209,8 @@ def place_units(parent, path, pos, colors):
     placed = []
     for u in path:
         if u.ID in placed:
-            u.ID = u.ID+"_"
+            # u.ID = u.ID+"_"
+            continue
         placed.append(u.ID)
         style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
 
@@ -214,7 +234,8 @@ def connect_streams(parent, sys, pos):
     connected = []
     for s in sys.streams:
         if s.ID in connected:
-            s.ID = s.ID+"_"
+            # s.ID = s.ID+"_"
+            continue
         connected.append(s.ID)
         elem = ET.SubElement(parent, "mxCell")
         elem.set("edge", "1")
@@ -252,8 +273,8 @@ def connect_streams(parent, sys, pos):
             geometry = ET.SubElement(outNode, "mxGeometry")
             geometry.set("x", str(pos[s.ID][0]))
             geometry.set("y", str(pos[s.ID][1]))
-            geometry.set("width", str(100))
-            geometry.set("height", str(60))
+            geometry.set("width", str(120))
+            geometry.set("height", str(100))
             geometry.set("as", "geometry")
         elif s.sink and s.source ==None:
             elem.set("id", f"i{s.ID}")
@@ -276,8 +297,8 @@ def connect_streams(parent, sys, pos):
             # geometry.set("y", str(in_ys))
             geometry.set("x", str(pos[s.ID][0]))
             geometry.set("y", str(pos[s.ID][1]))
-            geometry.set("width", str(100))
-            geometry.set("height", str(60))
+            geometry.set("width", str(120))
+            geometry.set("height", str(100))
             geometry.set("as", "geometry")
     return parent
 
@@ -301,7 +322,8 @@ def add_custom_labels(parent, sys, label_function):
             elem = find_element(parent, f"{s.ID}")
             if elem is not None:
                 elem.set("value", label)
-        except:
+        except Exception as e:
+            print(f"Error in adding custom label to stream {s.ID}: {e}")
             pass
     return parent
 
