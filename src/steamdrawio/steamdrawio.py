@@ -246,7 +246,7 @@ def connect_streams(parent, sys, pos):
 
             outNode = ET.SubElement(parent, "mxCell")
             outNode.set("id", f"o{s.ID}")
-            outNode.set("value", f"{s.ID}")
+            outNode.set("value", f"{s.ID}l")
             outNode.set(
                 "style",
                 "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;align=center;",
@@ -265,7 +265,7 @@ def connect_streams(parent, sys, pos):
             elem.set("target", f"{s.sink.ID}")
             elem.set("source", f"i{s.ID}")
             inNode = ET.SubElement(parent, "mxCell")
-            inNode.set("id", f"i{s.ID}")
+            inNode.set("id", f"i{s.ID}l")
             label = f"""{s.ID}"""
             inNode.set("value", label)
             # inNode.set("value", s.ID)
