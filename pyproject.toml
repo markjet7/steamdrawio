@@ -17,9 +17,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
-[project.dependencies]
-[
-    igraph = "^0.11.8"
+dependencies = [
+    "igraph>0.11.8"
 ]
 
 [project.urls]
