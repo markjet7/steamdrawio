@@ -80,7 +80,6 @@ def get_shape(nodeID):
     return shp
 
 
-
 def layout_system(
         sys
 ):
@@ -204,7 +203,7 @@ def place_units(parent, path, pos, colors):
 
         elem = ET.SubElement(parent, "mxCell")
         elem.set("id", u.ID)
-        elem.set("value", u.ID)
+        elem.set("value", u.ID.replace("_", " "))
         elem.set("style", style)
         elem.set("vertex", "1")
         elem.set("parent", "1")
@@ -240,7 +239,7 @@ def connect_streams(parent, sys, pos):
             elem.set("id", f"{s.ID}")
             elem.set("source", f"{s.source.ID}")
             elem.set("target", f"{s.sink.ID}")
-            elem.set("value", f"{s.ID}")
+            elem.set("value", f"{s.ID.replace('_', ' ')}")
 
         elif s.source and s.sink==None:
             elem.set("id", f"o{s.ID}")
@@ -250,7 +249,7 @@ def connect_streams(parent, sys, pos):
 
             outNode = ET.SubElement(parent, "mxCell")
             outNode.set("id", f"o{s.ID}l")
-            outNode.set("value", f"{s.ID}")
+            outNode.set("value", f"{s.ID.replace('_', ' ')}")
             outNode.set(
                 "style",
                 "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=42;align=center;",
@@ -270,7 +269,7 @@ def connect_streams(parent, sys, pos):
             elem.set("source", f"i{s.ID}l")
             inNode = ET.SubElement(parent, "mxCell")
             inNode.set("id", f"i{s.ID}l")
-            label = f"""{s.ID}"""
+            label = f"""{s.ID.replace('_', ' ')}"""
             inNode.set("value", label)
             # inNode.set("value", s.ID)
             inNode.set(
@@ -330,7 +329,7 @@ def spread_inlets(parent, sys, pos):
 def add_stream_labels(parent, sys, compounds):
     for s in sys.streams:
         if s.source and s.sink:
-            label = f"""{s.ID}\n"""
+            label = f"""{s.ID.replace('_', ' ')}"""
             if compounds is not None:
                 for c in compounds:
                     if c in [c.ID for c in s.available_chemicals]:
