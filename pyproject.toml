@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "steamdrawio"
-version = "0.5.7"
+version = "0.7.1"
 authors = [
   { name="Mark Mba Wright", email="markmw@iastate.edu" },
 ]
@@ -16,6 +16,9 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+
+[project.dependencies]
+igraph = "^0.11.8"
 
 [project.urls]
 "Homepage" = "https://github.com/markjet7/steamdrawio"

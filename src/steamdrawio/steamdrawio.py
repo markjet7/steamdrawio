@@ -12,7 +12,9 @@ import igraph as ig
 
 shapes = {
     "unit": ["process", "140", "100"],
-    "mixer": ["mxgraph.pid.mixers.in-line_static_mixer", "70", "20"],
+    "boiler": ["mxgraph.pid.vessels.furnace", "160", "200"],
+    "mixer": ["mxgraph.pid.mixers.in-line_static_mixer", "70", "70"],
+    "isentropiccompressor": ["mxgraph.pid.engines.turbine;flipH=1,", "70", "100"],
     "pump": ["mxgraph.pid.pumps.centrifugal_pump_1", "70", "70"],
     "steammixer": ["mxgraph.pid.piping.in-line_mixer", "100", "100"],
     "mockmixer": ["mxgraph.pid.piping.in-line_mixer", "60", "20"],
@@ -30,6 +32,7 @@ shapes = {
         "50",
         "10",
     ],
+    "drumdryer": ["mxgraph.pid.driers.rotary_drum_drier,_tumbling_drier", "85", "120"],
     "hxutility": ["mxgraph.pid.heat_exchangers.heater", "60", "60"],
     "hxprocess": ["mxgraph.pid.heat_exchangers.condenser", "60", "60"],
     "tank": ["mxgraph.pid.vessels.tank_(dished_roof)", "150", "120"],
@@ -66,6 +69,7 @@ shapes = {
     "reactor": ["mxgraph.pid.vessels.reactor", "160", "200"],
     "screwpress": ["mxgraph.pid.shaping_machines.extruder_(screw)", "100", "70"],
 }
+
 
 
 def get_shape(nodeID):
@@ -120,7 +124,7 @@ def layout_system(
     l = G.layout("tree")
     l.rotate(270)
     l.mirror(1)
-    l.scale([3, 1])
+    l.scale([2, 1])
     return G, l
 
 # %%
@@ -161,7 +165,7 @@ def calculate_positions(G, layout, grid_x, grid_y):
 
 def create_root_element():
     root = ET.Element("mxGraphModel")
-    root.set("dx", "846")
+    root.set("dx", "500")
     root.set("dy", "900")
     root.set("grid", "1")
     root.set("gridSize", "10")
@@ -196,7 +200,7 @@ def place_units(parent, path, pos, colors):
             # u.ID = u.ID+"_"
             continue
         placed.append(u.ID)
-        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;"
+        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;fontSize=46;"
 
         elem = ET.SubElement(parent, "mxCell")
         elem.set("id", u.ID)
@@ -207,7 +211,7 @@ def place_units(parent, path, pos, colors):
 
         geometry = ET.SubElement(elem, "mxGeometry")
         geometry.set("x", str(pos[u.ID][0]))
-        geometry.set("y", str(pos[u.ID][1]))
+        geometry.set("y", str(pos[u.ID][1] + float(get_shape(u)[2])/2))
         geometry.set("width", get_shape(u)[1])
         geometry.set("height", get_shape(u)[2])
         geometry.set("relative", "0")
@@ -226,7 +230,7 @@ def connect_streams(parent, sys, pos):
         elem.set("parent", "1")
         elem.set(
             "style",
-            "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=18;align=center;",
+            "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=32;align=center;strokeWidth=6;",
         )
 
         geometry = ET.SubElement(elem, "mxGeometry")
@@ -241,29 +245,29 @@ def connect_streams(parent, sys, pos):
         elif s.source and s.sink==None:
             elem.set("id", f"o{s.ID}")
             elem.set("source", f"{s.source.ID}")
-            elem.set("target", f"o{s.ID}")
+            elem.set("target", f"o{s.ID}l")
             # elem.set("value", f"{s.ID}")
 
             outNode = ET.SubElement(parent, "mxCell")
-            outNode.set("id", f"o{s.ID}")
-            outNode.set("value", f"{s.ID}l")
+            outNode.set("id", f"o{s.ID}l")
+            outNode.set("value", f"{s.ID}")
             outNode.set(
                 "style",
-                "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=12;align=center;",
+                "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=42;align=center;",
             )
             outNode.set("vertex", "1")
             outNode.set("parent", "1")
 
             geometry = ET.SubElement(outNode, "mxGeometry")
             geometry.set("x", str(pos[s.ID][0]))
-            geometry.set("y", str(pos[s.ID][1]))
-            geometry.set("width", str(120))
+            geometry.set("y", str(pos[s.ID][1]-25))
+            geometry.set("width", str(400))
             geometry.set("height", str(100))
             geometry.set("as", "geometry")
         elif s.sink and s.source ==None:
             elem.set("id", f"i{s.ID}")
             elem.set("target", f"{s.sink.ID}")
-            elem.set("source", f"i{s.ID}")
+            elem.set("source", f"i{s.ID}l")
             inNode = ET.SubElement(parent, "mxCell")
             inNode.set("id", f"i{s.ID}l")
             label = f"""{s.ID}"""
@@ -271,7 +275,7 @@ def connect_streams(parent, sys, pos):
             # inNode.set("value", s.ID)
             inNode.set(
                 "style",
-                "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=18;align=center;",
+                "rounded=1;whiteSpace=wrap;html=1;fontFamily=Helvetica;fontSize=42;align=center;",
             )
             inNode.set("vertex", "1")
             inNode.set("parent", "1")
@@ -281,9 +285,25 @@ def connect_streams(parent, sys, pos):
             # geometry.set("y", str(in_ys))
             geometry.set("x", str(pos[s.ID][0]))
             geometry.set("y", str(pos[s.ID][1]))
-            geometry.set("width", str(120))
+            geometry.set("width", str(400))
             geometry.set("height", str(100))
             geometry.set("as", "geometry")
+    return parent
+
+def move_outlets_to_right(parent, sys):
+    max_x = 0
+    for s in sys.streams:
+        if s.source and s.sink==None:
+            elem = find_element(parent, f"o{s.ID}l")
+            if elem is not None:
+                # print(dir(elem))
+                max_x = max(max_x, float(elem.find("mxGeometry").get("x")))
+
+    for s in sys.streams:
+        if s.source and s.sink==None:
+            elem = find_element(parent, f"o{s.ID}l")
+            if elem is not None:
+                elem.find("mxGeometry").set("x", str(max_x+400))
     return parent
 
 def add_stream_labels(parent, sys, compounds):
@@ -342,6 +362,7 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_
     parent = place_units(parent, path, pos, colors)
     parent = connect_streams(parent, sys, pos)
     parent = add_stream_labels(parent, sys, compounds)
+    parent = move_outlets_to_right(parent, sys)
     if label_fn is not None:
         parent = add_custom_labels(parent, sys, label_fn)
 
