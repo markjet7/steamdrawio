@@ -18,7 +18,9 @@ classifiers = [
 ]
 
 [project.dependencies]
-igraph = "^0.11.8"
+[
+    igraph = "^0.11.8"
+]
 
 [project.urls]
 "Homepage" = "https://github.com/markjet7/steamdrawio"
