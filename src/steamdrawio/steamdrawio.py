@@ -306,6 +306,27 @@ def move_outlets_to_right(parent, sys):
                 elem.find("mxGeometry").set("x", str(max_x+400))
     return parent
 
+def spread_inlets(parent, sys, pos):
+    # find units with multiple inlets
+    # spread the inlets from top (entryY= 0.99) to bottom (entryY=0.01) based on the source of the inlet
+    print("Spreading inlets")
+    def sourceID(x):
+        if x.source:
+            return x.source.ID
+        else:
+            return x.ID
+
+    for s in sys.units:
+        inlets = [i for i in s.ins if i]
+        if len(inlets) > 1:
+
+            inlets.sort(key=lambda x: pos[sourceID(x)][1])
+            for i, inlet in enumerate(inlets):
+                elem = find_element(parent, f"i{inlet.ID}")
+                if elem is not None:
+                    elem.set("style", elem.get("style") + f"entryY={i*1/(len(inlets)+1)+0.05};entryX=0;entryDx=0;entryDy=0;entryPerimeter=0;")
+    return parent
+
 def add_stream_labels(parent, sys, compounds):
     for s in sys.streams:
         if s.source and s.sink:
@@ -363,6 +384,7 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_
     parent = connect_streams(parent, sys, pos)
     parent = add_stream_labels(parent, sys, compounds)
     parent = move_outlets_to_right(parent, sys)
+    parent = spread_inlets(parent, sys, pos)
     if label_fn is not None:
         parent = add_custom_labels(parent, sys, label_fn)
 
