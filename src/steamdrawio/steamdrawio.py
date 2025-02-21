@@ -1,3 +1,5 @@
+# ToDo: Change to https://n2g.readthedocs.io/en/latest/diagram_plugins/DrawIo%20Module.html
+
 # %%
 import pprint
 import xml.etree.ElementTree as ET
@@ -199,7 +201,7 @@ def place_units(parent, path, pos, colors):
             # u.ID = u.ID+"_"
             continue
         placed.append(u.ID)
-        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;fontSize=46;"
+        style = "shape=" + get_shape(u)[0] + ";" + f"fillColor={colors[u.system]};verticalLabelPosition=bottom;labelPosition=center;align=center;verticalAlign=top;fontSize=20;"
 
         elem = ET.SubElement(parent, "mxCell")
         elem.set("id", u.ID)
@@ -229,7 +231,11 @@ def connect_streams(parent, sys, pos):
         elem.set("parent", "1")
         elem.set(
             "style",
-            "edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=32;align=center;strokeWidth=6;",
+            f"edgeStyle=elbowEdgeStyle;html=1;orthogonal=1;fontFamily=Helvetica;fontSize=20;align=center;strokeWidth=6;",
+        )
+        elem.set(
+            "connectable",
+            "0",
         )
 
         geometry = ET.SubElement(elem, "mxGeometry")
@@ -326,20 +332,27 @@ def spread_inlets(parent, sys, pos):
                     elem.set("style", elem.get("style") + f"entryY={i*1/(len(inlets)+1)+0.05};entryX=0;entryDx=0;entryDy=0;entryPerimeter=0;")
     return parent
 
-def add_stream_labels(parent, sys, compounds):
-    for s in sys.streams:
-        if s.source and s.sink:
-            label = f"""{s.ID.replace('_', ' ')}"""
-            if compounds is not None:
-                for c in compounds:
-                    if c in [c.ID for c in s.available_chemicals]:
-                        label += f"""{c}: {s.imass[c]:.2f}\n"""
-            elem = find_element(parent, f"{s.ID}")
-            if elem is not None:
-                elem.set("value", label)
-    return parent
+# def add_stream_labels(parent, sys, compounds):
+#     for s in sys.streams:
+#         if s.source and s.sink:
+#             label = f"""{s.ID.replace('_', ' ')}"""
+#             if compounds is not None:
+#                 for c in compounds:
+#                     if c in [c.ID for c in s.available_chemicals]:
+#                         label += f"""{c}: {s.imass[c]:.2f}\n"""
+#             elem = find_element(parent, f"{s.ID}")
+#             if elem is not None:
+#                 elem.set("value", label)
+#     return parent
 
-def add_custom_labels(parent, sys, label_function):
+# def add_unit_labels(parent, sys):
+#     for u in sys.units:
+#         elem = find_element(parent, f"{u.ID}")
+#         if elem is not None:
+#             elem.set("value", u.ID)
+#     return parent
+
+def add_stream_labels(parent, sys, label_function):
     for s in sys.streams:
         try:
             label = label_function(s)
@@ -348,6 +361,20 @@ def add_custom_labels(parent, sys, label_function):
                 elem.set("value", label)
         except Exception as e:
             print(f"Error in adding custom label to stream {s.ID}: {e}")
+            pass
+    return parent
+
+def add_unit_labels(parent, sys, label_function):
+    for u in sys.units:
+        try:
+            label = label_function(u)
+            elem = find_element(parent, f"{u.ID}")
+            if elem is not None:
+                elem.set("value", label)
+        except Exception as e:
+            print(f"Error in adding custom label to unit {u.ID}: {e}")
+            print("Elem: ", elem)
+            print("Label_fn: ", label_function)
             pass
     return parent
 
@@ -361,7 +388,7 @@ def find_element(parent, id):
     return None
 
 # Updated draw function
-def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None):
+def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None, label_units_fn=None):
     path = sys.unit_path
     groups = set(u.system for u in path)
 
@@ -385,10 +412,14 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_
     parent = move_outlets_to_right(parent, sys)
     parent = spread_inlets(parent, sys, pos)
     if label_fn is not None:
-        parent = add_custom_labels(parent, sys, label_fn)
+        parent = add_stream_labels(parent, sys, label_fn)
+    if label_units_fn is not None:
+        parent = add_unit_labels(parent, sys, label_units_fn)
+    
 
 
-        # Write the XML tree to a file
+    # Write the XML tree to a file
+    print("Nueva version")
     tree = ET.ElementTree(root)
     if "png" in filename or "jpg" in filename:
         ig.plot(G, target=filename)
