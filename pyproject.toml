@@ -18,7 +18,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "igraph>=0.11.8"
+    "igraph>=0.11.8",
+    "plotly>=6.0.1"
 ]
 
 [project.urls]

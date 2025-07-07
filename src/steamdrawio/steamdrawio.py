@@ -6,7 +6,11 @@ import xml.etree.ElementTree as ET
 import random
 import importlib
 
+
 import igraph as ig
+
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
 
 # from layout_nodes import *
 
@@ -387,8 +391,21 @@ def find_element(parent, id):
             return elem
     return None
 
+def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None, label_units_fn=None, backend="drawio"):
+    if backend.lower() == "drawio":
+        drawIO(sys, filename, grid_x, grid_y, compounds, label_fn, label_units_fn)
+    elif backend.lower() == "plotly":
+        drawPlotly(sys, filename, grid_x, grid_y, compounds, label_fn, label_units_fn)
+    elif backend.lower() == "matplotlib":
+        drawMatplotlib(sys, filename, grid_x, grid_y, compounds, label_fn, label_units_fn)
+    elif backend.lower() == "pillow":
+        drawPillow(sys, filename, grid_x, grid_y, compounds, label_fn, label_units_fn)
+
 # Updated draw function
-def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None, label_units_fn=None):
+def drawIO(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None, label_units_fn=None):
+
+    from IPython.display import display
+
     path = sys.unit_path
     groups = set(u.system for u in path)
 
@@ -419,7 +436,6 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_
 
 
     # Write the XML tree to a file
-    print("Nueva version")
     tree = ET.ElementTree(root)
     if "png" in filename or "jpg" in filename:
         ig.plot(G, target=filename)
@@ -428,14 +444,173 @@ def draw(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_
     else:
         with open(filename + ".drawio", "wb") as file:
             tree.write(file, encoding="utf-8", xml_declaration=True)
+
+        
         print(filename + ".drawio")
+
+        xml = ET.tostring(root, encoding="unicode")
+        display({"application/x-drawio": xml}, raw=True)
+        
         return parent
+# draw(system, backend="drawio", grid_x=100, grid_y=100)
+#%%
+def drawPlotly(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None, label_units_fn=None):
+    path = sys.unit_path
+    groups = set(u.system for u in path)
+
+    colors = generate_colors(groups)
+    G, layout = layout_system(sys)
+    pos = calculate_positions(G, layout, grid_x, grid_y)
+
+    print(pos)
+
+    fig = go.Figure()
+
+    for u in path:
+        fig.add_shape(
+            type="rect",
+            x0=pos[u.ID][0],
+            y0=pos[u.ID][1],
+            x1=pos[u.ID][0] +  len(u.ID)*180,
+            y1=pos[u.ID][1] + grid_y/2,
+            line=dict(color="black", width=2),
+            label={"texttemplate": u.ID},
+        )
+
+    for s in sys.streams:
+        if s.source and s.sink:
+            fig.add_trace(
+                go.Scatter(
+                    x=[pos[s.source.ID][0]+50, pos[s.sink.ID][0]-50],
+                    y=[pos[s.source.ID][1]+50, pos[s.sink.ID][1]+50],
+                    mode="lines",
+                    line=dict(color="black", width=2),
+                    showlegend=False,
+                )
+            )
+        elif s.source and not s.sink:
+            fig.add_shape(
+                type="rect",
+                x0=pos[s.ID][0],
+                y0=pos[s.ID][1],
+                x1=pos[s.ID][0] + len(s.ID)*180,
+                y1=pos[s.ID][1] + grid_y/2,
+                line=dict(color="black", width=2),
+                fillcolor="white",
+                label={"texttemplate": s.ID},
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=[pos[s.source.ID][0], pos[s.ID][0]],
+                    y=[pos[s.source.ID][1]+50, pos[s.ID][1]+50],
+                    mode="lines",
+                    line=dict(color="black", width=2),
+                    showlegend=False,
+                )
+            )
+        elif not s.source and s.sink:
+            fig.add_shape(
+                type="rect",
+                x0=pos[s.ID][0],
+                y0=pos[s.ID][1],
+                x1=pos[s.ID][0] + len(s.ID)*grid_x/7,
+                y1=pos[s.ID][1] + grid_y/2,
+                line=dict(color="black", width=2),
+                fillcolor="white",
+                label={"texttemplate": s.ID},
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=[pos[s.ID][0] + len(s.ID)*180, pos[s.sink.ID][0]],
+                    y=[pos[s.ID][1]+50, pos[s.sink.ID][1]+50],
+                    mode="lines",
+                    line=dict(color="black", width=2),
+                    showlegend=False,
+                )
+            )
+
+    fig.update_layout(
+        xaxis=dict(visible=False),
+        yaxis=dict(visible=False),
+        autosize=True,
+        showlegend=False,
+        font=dict(size=12),
+    )
+    fig.write_html(filename + ".html")
+    print(filename + ".html")
+    fig.show()
+    return fig
+
+def drawPillow(sys, filename="diagram", grid_x=300, grid_y=250, compounds=None, label_fn=None, label_units_fn=None):
+    path = sys.unit_path
+    groups = set(u.system for u in path)
+
+    colors = generate_colors(groups)
+    G, layout = layout_system(sys)
+    pos = calculate_positions(G, layout, grid_x, grid_y)
+    print(pos)
+
+    from PIL import Image, ImageDraw, ImageFont
+    from IPython.display import display
+
+    img = Image.new("RGB", (int(max([x[0] for x in pos.values()])*1.2), int(max([x[1] for x in pos.values()])*1.2)), color = (255, 255, 255))
+    d = ImageDraw.Draw(img)
+    fnt = ImageFont.load_default()
+    for u in path:
+        d.rectangle(
+            [pos[u.ID][0], pos[u.ID][1], pos[u.ID][0] +  len(u.ID)*6, pos[u.ID][1] + 30],
+            outline="black",
+            fill=(255, 255, 255),
+        )
+        d.text((pos[u.ID][0], pos[u.ID][1]+7), u.ID, font=fnt, fill=(0, 0, 0))
+
+    for s in sys.streams:
+        if s.source and s.sink:
+            d.line(
+                [pos[s.source.ID][0]+len(s.source.ID)*6, pos[s.source.ID][1]+15, pos[s.sink.ID][0], pos[s.sink.ID][1]+15],
+                fill="black",
+                width=2,
+            )
+        elif s.source and not s.sink:
+            d.rectangle(
+                [pos[s.source.ID][0], pos[s.source.ID][1]+15, pos[s.source.ID][0]+len(s.source.ID)*6, pos[s.source.ID][1] + 15],
+                outline="black",
+                fill=(255, 255, 255),
+            )
+            d.text((pos[s.ID][0], pos[s.ID][1]), s.ID, font=fnt, fill=(0, 0, 0))
+            d.line(
+                [pos[s.source.ID][0]+len(s.source.ID)*6, pos[s.source.ID][1]+15, pos[s.ID][0], pos[s.ID][1]],
+                fill="black",
+                width=2,
+            )
+        elif not s.source and s.sink:
+            d.rectangle(
+                [pos[s.ID][0], pos[s.ID][1], pos[s.ID][0] + len(s.ID)*6, pos[s.ID][1] + 30],
+                outline="black",
+                fill=(255, 255, 255),
+            )
+            d.text((pos[s.ID][0], pos[s.ID][1]), s.ID, font=fnt, fill=(0, 0, 0))
+            d.line(
+                [pos[s.ID][0] + len(s.ID)*6, pos[s.ID][1]+15, pos[s.sink.ID][0], pos[s.sink.ID][1]+15],
+                fill="black",
+                width=2,
+            )
+
+    img.save(filename + ".png")
+    print(filename + ".png")
+    display(img)
+    return img
+
+#%% Testing
+
+import sys 
+sys.path.append("./src/steamdrawio/")
+
+
+from ethanol import system
+
+# %%
+
+draw(system, backend="drawio", grid_x=100, grid_y=100)
 
 #%%
-# from ethanol import sys 
-# # G, l = layout(sys)
-# #%%
-# with open("/Users/markmw/Downloads/pallavi/ATJ/main.py", "r") as f:
-#     eval(f)
-#     p = draw(sys, filename="test2")
-# #%%

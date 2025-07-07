@@ -297,10 +297,10 @@ ddgs_mixer = bst.units.Mixer("ddgs_mixer", ins=(dryer-0, evaporator-1), outs="DD
 ddgs_out = ddgs_mixer
 
 
-sys = bst.main_flowsheet.create_system("CornEthanol")
-sys.diagram()
+system = bst.main_flowsheet.create_system("CornEthanol")
+system.diagram()
 # %%
-sys.simulate()
+system.simulate()
 # # %%
 # sys.show(flow="tonnes/day")
 # # %%
@@ -432,5 +432,3 @@ sys.simulate()
 # # %%
 # # %%
 # # problem statement
-
-
